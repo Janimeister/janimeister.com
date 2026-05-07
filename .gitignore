@@ -15,12 +15,14 @@ public/videos.json
 .vite/
 .cache/
 .wrangler/
-.turbo/
 
 # Playwright
 playwright-report/
 test-results/
 playwright/.cache/
+
+# Jest
+coverage/
 
 # Misc
 .DS_Store

@@ -1,4 +1,5 @@
 import { render, screen } from '../../test/test-utils';
+import userEvent from '@testing-library/user-event';
 import Nav from '../Nav';
 
 describe('Nav', () => {
@@ -47,8 +48,6 @@ describe('Nav', () => {
 });
 
 // Helper that sets up userEvent
-import userEvent from '@testing-library/user-event';
-
 function renderWithUser(ui: React.ReactElement) {
   return {
     user: userEvent.setup(),

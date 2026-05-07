@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Generated at build time
+public/videos.json
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Tooling caches
+.vite/
+.cache/
+.wrangler/
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Jest
+coverage/
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+!.env.example

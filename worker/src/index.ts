@@ -32,11 +32,11 @@ export default {
       allowed === '*' ? '*' : allowed.split(',').map((s) => s.trim()).includes(origin) ? origin : '';
 
     const baseHeaders: Record<string, string> = {
-      'Vary': 'Origin',
       'Cache-Control': 'public, max-age=600, stale-while-revalidate=3600',
     };
     if (allowOrigin) {
       baseHeaders['Access-Control-Allow-Origin'] = allowOrigin;
+      baseHeaders['Vary'] = 'Origin';
     }
 
     if (req.method === 'OPTIONS') {

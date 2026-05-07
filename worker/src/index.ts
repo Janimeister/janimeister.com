@@ -34,9 +34,11 @@ export default {
     const baseHeaders: Record<string, string> = {
       'Cache-Control': 'public, max-age=600, stale-while-revalidate=3600',
     };
+    if (allowed !== '*') {
+      baseHeaders['Vary'] = 'Origin';
+    }
     if (allowOrigin) {
       baseHeaders['Access-Control-Allow-Origin'] = allowOrigin;
-      baseHeaders['Vary'] = 'Origin';
     }
 
     if (req.method === 'OPTIONS') {

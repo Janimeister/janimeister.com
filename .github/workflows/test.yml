@@ -8,19 +8,18 @@ on:
 jobs:
   build:
     name: Build & Type Check
-    # Runs `npm run build` which invokes the `prebuild` script (fetch-videos.mjs)
-    # followed by tsc type-check and vite build, catching type errors and broken
-    # imports on every PR before they reach the deploy workflow.
+    # Runs `build:ci` (tsc type-check + vite build, skipping the live YouTube
+    # fetch prebuild step) so PR CI doesn't depend on external network availability.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.9
           cache: npm
       - run: npm ci
       - name: Build (type check + vite build)
-        run: npm run build
+        run: npm run build:ci
 
   unit:
     name: Unit Tests
@@ -29,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.9
           cache: npm
       - run: npm ci
       - run: npm run lint
@@ -42,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.9
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium

@@ -89,8 +89,7 @@ export default {
     const cacheKey = new Request(`https://feed.cache/${channelId}`, { method: 'GET' });
     const cached = await cache.match(cacheKey);
     if (cached) {
-      const body = await cached.text();
-      return new Response(body, {
+      return new Response(cached.body, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           ...baseHeaders,

@@ -30,6 +30,14 @@ test.describe('Accessibility', () => {
   });
 
   test('skip link navigates to videos section', async ({ page }) => {
+    // Pre-acknowledge the cookie notice so it does not capture Tab focus
+    // before the skip link (role="dialog" steals focus on mobile Chrome).
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'janimeister.consent.v1',
+        JSON.stringify({ acknowledged: true, decidedAt: new Date().toISOString() }),
+      );
+    });
     await page.goto('/');
     // Tab to reach the skip link
     await page.keyboard.press('Tab');

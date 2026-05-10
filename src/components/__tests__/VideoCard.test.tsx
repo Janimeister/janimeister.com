@@ -42,8 +42,8 @@ describe('VideoCard', () => {
 
   it('formats and displays the publish date', () => {
     render(<VideoCard video={mockVideo} index={0} />);
-    // The date should be rendered as a time element
-    const time = screen.getByText(/mar/i);
+    // The date is rendered in Finnish locale (d.m.yyyy), e.g. "15.3.2024"
+    const time = screen.getByText(/15\.3\.2024/);
     expect(time).toBeInTheDocument();
     expect(time.closest('time')).toHaveAttribute('dateTime', mockVideo.publishedAt);
   });

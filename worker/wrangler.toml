@@ -7,7 +7,7 @@ compatibility_date = "2025-09-01"
 #   "https://<user>.github.io,https://your-custom-domain.com"
 [vars]
 CHANNEL_ID = "UCvCde3OAobvTuLdeiCpFDGw"
-ALLOWED_ORIGIN = "*"
+ALLOWED_ORIGIN = "https://janimeister.com"
 
 [observability]
 enabled = true

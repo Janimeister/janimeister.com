@@ -135,6 +135,12 @@ function json(obj: unknown, status: number, headers: Record<string, string>): Re
 /** Fetch all uploads via YouTube Data API v3 (up to MAX_PAGES * 50 videos). */
 async function fetchViaApi(channelId: string, apiKey: string): Promise<Video[]> {
   // The uploads playlist ID is the channel ID with "UC" replaced by "UU".
+  if (!channelId.startsWith('UC')) {
+    throw new Error(
+      `CHANNEL_ID must be a canonical YouTube channel ID starting with "UC" (got "${channelId}"). ` +
+        'Set it to the UC… ID found in the channel URL, not a handle or custom URL.',
+    );
+  }
   const uploadsPlaylistId = 'UU' + channelId.slice(2);
   const videos: Video[] = [];
   let pageToken: string | undefined;
@@ -149,6 +155,7 @@ async function fetchViaApi(channelId: string, apiKey: string): Promise<Video[]> 
 
     const res = await fetch(apiUrl.toString(), {
       headers: { 'user-agent': 'janimeister-worker/1.0' },
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) throw new Error(`YouTube API HTTP ${res.status}`);
 
@@ -178,6 +185,7 @@ async function fetchViaRss(channelId: string): Promise<Video[]> {
   const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
   const res = await fetch(feedUrl, {
     headers: { 'user-agent': 'janimeister-worker/1.0' },
+    signal: AbortSignal.timeout(15_000),
     cf: { cacheTtl: 600, cacheEverything: true },
   } as RequestInit);
   if (!res.ok) throw new Error(`RSS feed HTTP ${res.status}`);

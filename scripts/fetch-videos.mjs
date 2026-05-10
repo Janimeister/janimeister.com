@@ -23,6 +23,12 @@ const OUT = resolve(__dirname, '..', 'public', 'videos.json');
 const MAX_PAGES = 4; // up to 200 videos
 
 async function fetchViaApi(channelId, apiKey) {
+  if (!channelId.startsWith('UC')) {
+    throw new Error(
+      `YT_CHANNEL_ID must be a canonical YouTube channel ID starting with "UC" (got "${channelId}"). ` +
+        'Set it to the UC… ID found in the channel URL, not a handle or custom URL.',
+    );
+  }
   const uploadsPlaylistId = 'UU' + channelId.slice(2);
   const videos = [];
   let pageToken;

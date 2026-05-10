@@ -25,6 +25,9 @@ interface PlaylistItemsResponse {
       thumbnails?: { high?: { url: string } };
       resourceId: { videoId: string };
     };
+    contentDetails?: {
+      videoPublishedAt?: string;
+    };
   }>;
   nextPageToken?: string;
 }
@@ -147,7 +150,7 @@ async function fetchViaApi(channelId: string, apiKey: string): Promise<Video[]> 
 
   for (let page = 0; page < MAX_PAGES; page++) {
     const apiUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
-    apiUrl.searchParams.set('part', 'snippet');
+    apiUrl.searchParams.set('part', 'snippet,contentDetails');
     apiUrl.searchParams.set('playlistId', uploadsPlaylistId);
     apiUrl.searchParams.set('maxResults', '50');
     apiUrl.searchParams.set('key', apiKey);
@@ -161,14 +164,14 @@ async function fetchViaApi(channelId: string, apiKey: string): Promise<Video[]> 
 
     const data = (await res.json()) as PlaylistItemsResponse;
     for (const item of data.items ?? []) {
-      const { snippet } = item;
+      const { snippet, contentDetails } = item;
       const videoId = snippet.resourceId.videoId;
       videos.push({
         id: videoId,
         title: snippet.title.trim(),
         url: `https://www.youtube.com/watch?v=${videoId}`,
         thumbnail: snippet.thumbnails?.high?.url ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-        publishedAt: snippet.publishedAt,
+        publishedAt: contentDetails?.videoPublishedAt ?? snippet.publishedAt,
         description: snippet.description ? snippet.description.trim().slice(0, 500) : undefined,
       });
     }

@@ -35,7 +35,7 @@ async function fetchViaApi(channelId, apiKey) {
 
   for (let page = 0; page < MAX_PAGES; page++) {
     const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
-    url.searchParams.set('part', 'snippet');
+    url.searchParams.set('part', 'snippet,contentDetails');
     url.searchParams.set('playlistId', uploadsPlaylistId);
     url.searchParams.set('maxResults', '50');
     url.searchParams.set('key', apiKey);
@@ -49,14 +49,14 @@ async function fetchViaApi(channelId, apiKey) {
 
     const data = await res.json();
     for (const item of data.items ?? []) {
-      const { snippet } = item;
+      const { snippet, contentDetails } = item;
       const videoId = snippet.resourceId.videoId;
       videos.push({
         id: videoId,
         title: snippet.title.trim(),
         url: `https://www.youtube.com/watch?v=${videoId}`,
         thumbnail: snippet.thumbnails?.high?.url ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-        publishedAt: snippet.publishedAt,
+        publishedAt: contentDetails?.videoPublishedAt ?? snippet.publishedAt,
         description: snippet.description ? snippet.description.trim().slice(0, 500) : undefined,
       });
     }

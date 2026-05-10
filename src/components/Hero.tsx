@@ -54,7 +54,7 @@ export default function Hero(): ReactElement {
             { label: 'Format', value: 'Boss Kills' },
             { label: 'Status', value: 'Undying' },
           ].map((s) => (
-            <div key={s.label} className="frame-souls frame-souls-corners px-2 py-3 sm:px-4 sm:py-4 min-w-0 overflow-hidden">
+            <div key={s.label} className="frame-souls frame-souls-corners px-2 py-3 sm:px-4 sm:py-4 min-w-0">
               <dt className="font-display text-[0.55rem] sm:text-xs tracking-[0.1em] sm:tracking-[0.25em] text-parchment-dim uppercase truncate">
                 {s.label}
               </dt>

@@ -13,7 +13,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'npm run build && npm run preview -- --port=4173 --strictPort --host 127.0.0.1',
+        command: 'npm run build:e2e && npm run preview -- --port=4173 --strictPort --host 127.0.0.1',
         url: 'http://127.0.0.1:4173',
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,

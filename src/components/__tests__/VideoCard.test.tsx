@@ -41,11 +41,16 @@ describe('VideoCard', () => {
   });
 
   it('formats and displays the publish date', () => {
-    render(<VideoCard video={mockVideo} index={0} />);
-    // The date is rendered in Finnish locale (d.m.yyyy), e.g. "15.3.2024"
-    const time = screen.getByText(/15\.3\.2024/);
-    expect(time).toBeInTheDocument();
-    expect(time.closest('time')).toHaveAttribute('dateTime', mockVideo.publishedAt);
+    const { container } = render(<VideoCard video={mockVideo} index={0} />);
+    const time = container.querySelector('time');
+    expect(time).not.toBeNull();
+    expect(time!).toHaveAttribute('dateTime', mockVideo.publishedAt);
+    const expected = new Date(mockVideo.publishedAt).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+    expect(time!.textContent?.trim()).toBe(expected);
   });
 
   it('has an accessible label including the video title', () => {

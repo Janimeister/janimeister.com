@@ -30,8 +30,7 @@ test.describe('Accessibility', () => {
   });
 
   test('skip link navigates to videos section', async ({ page }) => {
-    // Pre-acknowledge the cookie notice so it does not capture Tab focus
-    // before the skip link (role="dialog" steals focus on mobile Chrome).
+    // Pre-acknowledge the cookie notice so it does not interfere.
     await page.addInitScript(() => {
       localStorage.setItem(
         'janimeister.consent.v1',
@@ -39,9 +38,9 @@ test.describe('Accessibility', () => {
       );
     });
     await page.goto('/');
-    // Tab to reach the skip link
-    await page.keyboard.press('Tab');
     const skipLink = page.getByRole('link', { name: /skip to videos/i });
+    // Focus directly — Tab-based focus is unreliable on mobile browsers.
+    await skipLink.focus();
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/#videos/);

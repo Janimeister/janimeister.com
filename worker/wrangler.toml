@@ -3,11 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2025-09-01"
 
 # Configure your channel + allowed origins.
-# After Pages deploy, set ALLOWED_ORIGIN to e.g.
-#   "https://<user>.github.io,https://your-custom-domain.com"
 [vars]
 CHANNEL_ID = "UCvCde3OAobvTuLdeiCpFDGw"
 ALLOWED_ORIGIN = "https://janimeister.com"
+
+# YT_API_KEY must be set as a secret, NOT here (to avoid committing it).
+# Run once: wrangler secret put YT_API_KEY
 
 [observability]
 enabled = true

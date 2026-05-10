@@ -87,13 +87,14 @@ export default {
     // Edge cache keyed by channel + effective origin. When CORS is restricted
     // (ALLOWED_ORIGIN is not '*'), each allowed origin gets its own cache entry
     // so a response with origin A's Access-Control-Allow-Origin header is never
-    // served to origin B. Requests from disallowed or missing origins bypass the
-    // cache entirely to avoid collision under a shared fallback key.
+    // served to origin B. Requests with a disallowed or absent origin are cached
+    // under a shared 'no-cors' key — their responses never include an
+    // Access-Control-Allow-Origin header so cross-origin collisions can't occur,
+    // and caching them prevents repeated upstream calls from burning API quota.
     const cache = caches.default;
-    const bypassCache = allowed !== '*' && !allowOrigin;
-    const cacheKeySuffix = bypassCache || allowed === '*' ? '' : `/${encodeURIComponent(allowOrigin)}`;
+    const cacheKeySuffix = allowed === '*' ? '' : allowOrigin ? `/${encodeURIComponent(allowOrigin)}` : '/no-cors';
     const cacheKey = new Request(`https://feed.cache/${channelId}${cacheKeySuffix}`, { method: 'GET' });
-    const cached = bypassCache ? null : await cache.match(cacheKey);
+    const cached = await cache.match(cacheKey);
     if (cached) {
       return new Response(cached.body, {
         headers: {
@@ -128,7 +129,7 @@ export default {
         'X-Cache': 'MISS',
       },
     });
-    ctx.waitUntil(bypassCache ? Promise.resolve() : cache.put(cacheKey, response.clone()));
+    ctx.waitUntil(cache.put(cacheKey, response.clone()));
     return response;
   },
 };

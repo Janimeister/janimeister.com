@@ -43,9 +43,14 @@ describe('VideoCard', () => {
   it('formats and displays the publish date', () => {
     const { container } = render(<VideoCard video={mockVideo} index={0} />);
     const time = container.querySelector('time');
-    expect(time).toBeInTheDocument();
-    expect(time).toHaveAttribute('dateTime', mockVideo.publishedAt);
-    expect(time?.textContent?.trim()).toBeTruthy();
+    expect(time).not.toBeNull();
+    expect(time!).toHaveAttribute('dateTime', mockVideo.publishedAt);
+    const expected = new Date(mockVideo.publishedAt).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+    expect(time!.textContent?.trim()).toBe(expected);
   });
 
   it('has an accessible label including the video title', () => {

@@ -16,11 +16,11 @@ export default function Hero(): ReactElement {
       </div>
 
       <div className="relative mx-auto max-w-4xl text-center animate-fade-up">
-        <p className="font-display text-xs tracking-[0.6em] text-gold-bright/80 mb-6">
+        <p className="font-display text-xs tracking-[0.2em] sm:tracking-[0.6em] text-gold-bright/80 mb-6">
           ✦ A TARNISHED&apos;S CHRONICLE ✦
         </p>
 
-        <h1 className="heading-rune font-display text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.95]">
+        <h1 className="heading-rune font-display text-4xl sm:text-7xl lg:text-8xl font-black leading-[0.95]">
           Janimeister
         </h1>
 
@@ -48,17 +48,17 @@ export default function Hero(): ReactElement {
           </a>
         </div>
 
-        <dl className="mt-14 grid grid-cols-3 gap-2 sm:gap-8 max-w-xl mx-auto">
+        <dl className="mt-14 grid grid-cols-3 gap-2 sm:gap-8 w-full max-w-xl mx-auto">
           {[
             { label: 'Realms', value: 'FromSoft' },
             { label: 'Format', value: 'Boss Kills' },
             { label: 'Status', value: 'Undying' },
           ].map((s) => (
-            <div key={s.label} className="frame-souls frame-souls-corners px-3 py-3 sm:px-4 sm:py-4">
-              <dt className="font-display text-[0.6rem] sm:text-xs tracking-[0.25em] text-parchment-dim uppercase">
+            <div key={s.label} className="frame-souls frame-souls-corners px-2 py-3 sm:px-4 sm:py-4 min-w-0">
+              <dt className="font-display text-[0.55rem] sm:text-xs tracking-[0.1em] sm:tracking-[0.25em] text-parchment-dim uppercase truncate">
                 {s.label}
               </dt>
-              <dd className="mt-1 font-display text-sm sm:text-lg text-gold-bright">{s.value}</dd>
+              <dd className="mt-1 font-display text-xs sm:text-lg text-gold-bright truncate">{s.value}</dd>
             </div>
           ))}
         </dl>

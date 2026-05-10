@@ -1,8 +1,12 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
+  # Only deploy after the Tests workflow passes on main.
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
     branches: [main]
+  # Allow manual runs and the daily refresh to bypass the test gate.
   workflow_dispatch:
   schedule:
     # Refresh the static videos.json daily so the page picks up new uploads
@@ -20,6 +24,8 @@ concurrency:
 
 jobs:
   build:
+    # For workflow_run events, only proceed if tests passed.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

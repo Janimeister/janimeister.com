@@ -155,13 +155,14 @@ async function main() {
     await writeFile(OUT, JSON.stringify(data, null, 2), 'utf8');
     console.log(`✔ Wrote ${videos.length} videos to ${OUT}`);
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     if (await fileExists(OUT)) {
-      console.warn(`⚠ Live fetch failed (${err.message}); keeping existing ${OUT}.`);
+      console.warn(`⚠ Live fetch failed (${message}); keeping existing ${OUT}.`);
       return;
     }
     // No existing file to fall back to — fail the build so a deploy is never
     // published with an empty video list.
-    throw err;
+    throw err instanceof Error ? err : new Error(message);
   }
 }
 

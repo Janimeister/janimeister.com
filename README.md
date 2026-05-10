@@ -11,6 +11,10 @@ chronicling FromSoftware boss kills (Elden Ring, Dark Souls).
 - 🧪 Playwright e2e tests (desktop + mobile)
 - ♿ Accessible: skip-link, ARIA labels, reduced-motion support, semantic landmarks
 
+## Prerequisites
+
+- **Node.js >= 22.9.0** (the build scripts use `--env-file-if-exists`, introduced in Node 22.9)
+
 ## Local development
 
 ```bash
@@ -18,8 +22,10 @@ npm install
 npm run dev
 ```
 
-The site fetches the latest 15 videos from the channel's public RSS feed at
-build time and writes `public/videos.json`. To refresh manually:
+The site fetches the latest videos from the channel at build time and writes
+`public/videos.json`. When `YT_API_KEY` is set it uses the YouTube Data API
+v3 (up to 200 videos); otherwise it falls back to the public RSS feed (15 videos).
+To refresh manually:
 
 ```bash
 npm run fetch:videos
@@ -89,8 +95,9 @@ The `Tests` workflow (`.github/workflows/test.yml`) runs two parallel jobs:
 
 | Job | What it does |
 |-----|-------------|
+| **build** | Type check (`tsc`) + Vite build (skips live YouTube fetch via `build:ci`) |
 | **unit** | Lint (`tsc`) + Jest unit tests |
-| **e2e** | Playwright browser tests on Chromium |
+| **e2e** | Playwright browser tests on Chromium (uses checked-in fixture data via `build:e2e`) |
 
 Failed e2e runs upload the Playwright HTML report as an artifact for debugging.
 

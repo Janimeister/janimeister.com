@@ -1,0 +1,48 @@
+{
+  "channelId": "UCvCde3OAobvTuLdeiCpFDGw",
+  "channelTitle": "Janimeister",
+  "channelUrl": "https://www.youtube.com/@janimeister",
+  "fetchedAt": "2024-03-15T12:00:00.000Z",
+  "videos": [
+    {
+      "id": "fixture001",
+      "title": "Malenia, Blade of Miquella | No Hit",
+      "url": "https://www.youtube.com/watch?v=fixture001",
+      "thumbnail": "https://i.ytimg.com/vi/fixture001/hqdefault.jpg",
+      "publishedAt": "2024-03-15T10:00:00.000Z",
+      "description": "Fixture video for e2e tests."
+    },
+    {
+      "id": "fixture002",
+      "title": "Consort Radahn | No Hit",
+      "url": "https://www.youtube.com/watch?v=fixture002",
+      "thumbnail": "https://i.ytimg.com/vi/fixture002/hqdefault.jpg",
+      "publishedAt": "2024-02-10T10:00:00.000Z",
+      "description": "Fixture video for e2e tests."
+    },
+    {
+      "id": "fixture003",
+      "title": "Elden Beast | No Hit",
+      "url": "https://www.youtube.com/watch?v=fixture003",
+      "thumbnail": "https://i.ytimg.com/vi/fixture003/hqdefault.jpg",
+      "publishedAt": "2024-01-05T10:00:00.000Z",
+      "description": "Fixture video for e2e tests."
+    },
+    {
+      "id": "fixture004",
+      "title": "Godfrey, First Elden Lord | No Hit",
+      "url": "https://www.youtube.com/watch?v=fixture004",
+      "thumbnail": "https://i.ytimg.com/vi/fixture004/hqdefault.jpg",
+      "publishedAt": "2023-12-20T10:00:00.000Z",
+      "description": "Fixture video for e2e tests."
+    },
+    {
+      "id": "fixture005",
+      "title": "Placidusax | No Hit",
+      "url": "https://www.youtube.com/watch?v=fixture005",
+      "thumbnail": "https://i.ytimg.com/vi/fixture005/hqdefault.jpg",
+      "publishedAt": "2023-11-01T10:00:00.000Z",
+      "description": "Fixture video for e2e tests."
+    }
+  ]
+}

@@ -1,15 +1,35 @@
 /**
  * Cloudflare Worker that exposes the Janimeister YouTube feed as JSON.
  *
- * - Pulls https://www.youtube.com/feeds/videos.xml?channel_id=...
- * - Parses entries with regex (no deps; the feed is stable & well-formed)
+ * - Uses YouTube Data API v3 (playlistItems) to fetch all uploads (up to 200)
+ * - Falls back to the RSS feed (15 videos) when YT_API_KEY is not set
  * - Caches at the edge for 10 minutes; serves stale-while-revalidate up to 1h
  * - CORS: allows `ALLOWED_ORIGIN` (configure in wrangler.toml) or `*`
+ *
+ * Secrets (set via `wrangler secret put`):
+ *   YT_API_KEY  — YouTube Data API v3 key from Google Cloud Console
  */
 
 interface Env {
   CHANNEL_ID?: string;
   ALLOWED_ORIGIN?: string;
+  YT_API_KEY?: string;
+}
+
+interface PlaylistItemsResponse {
+  items?: Array<{
+    snippet: {
+      publishedAt: string;
+      title: string;
+      description: string;
+      thumbnails?: { high?: { url: string } };
+      resourceId: { videoId: string };
+    };
+    contentDetails?: {
+      videoPublishedAt?: string;
+    };
+  }>;
+  nextPageToken?: string;
 }
 
 interface Video {
@@ -22,6 +42,7 @@ interface Video {
 }
 
 const DEFAULT_CHANNEL = 'UCvCde3OAobvTuLdeiCpFDGw';
+const MAX_PAGES = 4; // up to 200 videos (50 per page)
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -62,15 +83,20 @@ export default {
     }
 
     const channelId = env.CHANNEL_ID || DEFAULT_CHANNEL;
-    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
 
-    // Edge cache keyed by request URL.
+    // Edge cache keyed by channel + effective origin. When CORS is restricted
+    // (ALLOWED_ORIGIN is not '*'), each allowed origin gets its own cache entry
+    // so a response with origin A's Access-Control-Allow-Origin header is never
+    // served to origin B. Requests with a disallowed or absent origin are cached
+    // under a shared 'no-cors' key — their responses never include an
+    // Access-Control-Allow-Origin header so cross-origin collisions can't occur,
+    // and caching them prevents repeated upstream calls from burning API quota.
     const cache = caches.default;
-    const cacheKey = new Request(`https://feed.cache/${channelId}`, { method: 'GET' });
+    const cacheKeySuffix = allowed === '*' ? '' : allowOrigin ? `/${encodeURIComponent(allowOrigin)}` : '/no-cors';
+    const cacheKey = new Request(`https://feed.cache/${channelId}${cacheKeySuffix}`, { method: 'GET' });
     const cached = await cache.match(cacheKey);
     if (cached) {
-      const body = await cached.text();
-      return new Response(body, {
+      return new Response(cached.body, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           ...baseHeaders,
@@ -79,21 +105,14 @@ export default {
       });
     }
 
-    let xml: string;
+    let videos: Video[];
     try {
-      const upstream = await fetch(feedUrl, {
-        headers: { 'user-agent': 'janimeister-worker/1.0' },
-        cf: { cacheTtl: 600, cacheEverything: true },
-      });
-      if (!upstream.ok) {
-        return json({ error: 'upstream', status: upstream.status }, 502, baseHeaders);
-      }
-      xml = await upstream.text();
+      videos = env.YT_API_KEY
+        ? await fetchViaApi(channelId, env.YT_API_KEY)
+        : await fetchViaRss(channelId);
     } catch (err) {
       return json({ error: 'fetch_failed', message: String(err) }, 502, baseHeaders);
     }
-
-    const videos = parseFeed(xml);
     const payload = {
       channelId,
       channelTitle: 'Janimeister',
@@ -120,6 +139,66 @@ function json(obj: unknown, status: number, headers: Record<string, string>): Re
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers },
   });
+}
+
+/** Fetch all uploads via YouTube Data API v3 (up to MAX_PAGES * 50 videos). */
+async function fetchViaApi(channelId: string, apiKey: string): Promise<Video[]> {
+  // The uploads playlist ID is the channel ID with "UC" replaced by "UU".
+  if (!channelId.startsWith('UC')) {
+    throw new Error(
+      `CHANNEL_ID must be a canonical YouTube channel ID starting with "UC" (got "${channelId}"). ` +
+        'Set it to the UC… ID found in the channel URL, not a handle or custom URL.',
+    );
+  }
+  const uploadsPlaylistId = 'UU' + channelId.slice(2);
+  const videos: Video[] = [];
+  let pageToken: string | undefined;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const apiUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+    apiUrl.searchParams.set('part', 'snippet,contentDetails');
+    apiUrl.searchParams.set('playlistId', uploadsPlaylistId);
+    apiUrl.searchParams.set('maxResults', '50');
+    apiUrl.searchParams.set('key', apiKey);
+    if (pageToken) apiUrl.searchParams.set('pageToken', pageToken);
+
+    const res = await fetch(apiUrl.toString(), {
+      headers: { 'user-agent': 'janimeister-worker/1.0' },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`YouTube API HTTP ${res.status}`);
+
+    const data = (await res.json()) as PlaylistItemsResponse;
+    for (const item of data.items ?? []) {
+      const { snippet, contentDetails } = item;
+      const videoId = snippet.resourceId.videoId;
+      videos.push({
+        id: videoId,
+        title: snippet.title.trim(),
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        thumbnail: snippet.thumbnails?.high?.url ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        publishedAt: contentDetails?.videoPublishedAt ?? snippet.publishedAt,
+        description: snippet.description ? snippet.description.trim().slice(0, 500) : undefined,
+      });
+    }
+
+    if (!data.nextPageToken) break;
+    pageToken = data.nextPageToken;
+  }
+
+  return videos;
+}
+
+/** Fallback: fetch the RSS feed (returns only the 15 most recent videos). */
+async function fetchViaRss(channelId: string): Promise<Video[]> {
+  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  const res = await fetch(feedUrl, {
+    headers: { 'user-agent': 'janimeister-worker/1.0' },
+    signal: AbortSignal.timeout(15_000),
+    cf: { cacheTtl: 600, cacheEverything: true },
+  } as RequestInit);
+  if (!res.ok) throw new Error(`RSS feed HTTP ${res.status}`);
+  return parseFeed(await res.text());
 }
 
 function parseFeed(xml: string): Video[] {

@@ -3,8 +3,12 @@
 // Generates `public/videos.json` so the site has guaranteed static fallback
 // data even if the live Cloudflare Worker is unreachable. Runs as `prebuild`.
 //
-// If the network is unavailable (e.g. offline CI), keeps the previous file
-// when present and exits 0; only fails if there is no fallback at all.
+// Uses YouTube Data API v3 when YT_API_KEY is set (up to 200 videos).
+// Falls back to the RSS feed (15 videos) when the key is absent.
+//
+// If the network is unavailable (e.g. offline local dev), keeps the previous
+// file when one already exists and exits 0. Fails the build when the fetch
+// fails and no previous file is present (e.g. fresh CI checkout).
 
 import { writeFile, mkdir, access, constants as fsConstants } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
@@ -16,8 +20,64 @@ const __dirname = dirname(__filename);
 const CHANNEL_ID = process.env.YT_CHANNEL_ID || 'UCvCde3OAobvTuLdeiCpFDGw';
 const CHANNEL_TITLE = 'Janimeister';
 const CHANNEL_URL = 'https://www.youtube.com/@janimeister';
-const FEED_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
 const OUT = resolve(__dirname, '..', 'public', 'videos.json');
+const MAX_PAGES = 4; // up to 200 videos
+
+async function fetchViaApi(channelId, apiKey) {
+  if (!channelId.startsWith('UC')) {
+    throw new Error(
+      `YT_CHANNEL_ID must be a canonical YouTube channel ID starting with "UC" (got "${channelId}"). ` +
+        'Set it to the UC… ID found in the channel URL, not a handle or custom URL.',
+    );
+  }
+  const uploadsPlaylistId = 'UU' + channelId.slice(2);
+  const videos = [];
+  let pageToken;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+    url.searchParams.set('part', 'snippet,contentDetails');
+    url.searchParams.set('playlistId', uploadsPlaylistId);
+    url.searchParams.set('maxResults', '50');
+    url.searchParams.set('key', apiKey);
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+
+    const res = await fetch(url.toString(), {
+      headers: { 'user-agent': 'janimeister-site-build/1.0' },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`YouTube API HTTP ${res.status}`);
+
+    const data = await res.json();
+    for (const item of data.items ?? []) {
+      const { snippet, contentDetails } = item;
+      const videoId = snippet.resourceId.videoId;
+      videos.push({
+        id: videoId,
+        title: snippet.title.trim(),
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        thumbnail: snippet.thumbnails?.high?.url ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        publishedAt: contentDetails?.videoPublishedAt ?? snippet.publishedAt,
+        description: snippet.description ? snippet.description.trim().slice(0, 500) : undefined,
+      });
+    }
+
+    if (!data.nextPageToken) break;
+    pageToken = data.nextPageToken;
+  }
+
+  return videos;
+}
+
+async function fetchViaRss(channelId) {
+  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  const res = await fetch(feedUrl, {
+    headers: { 'user-agent': 'janimeister-site-build/1.0' },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`RSS HTTP ${res.status}`);
+  return parseFeed(await res.text());
+}
 
 /**
  * Minimal, dependency-free XML feed parser specialised for YouTube's feed.
@@ -74,14 +134,16 @@ async function fileExists(path) {
 async function main() {
   await mkdir(dirname(OUT), { recursive: true });
   try {
-    const res = await fetch(FEED_URL, {
-      headers: { 'user-agent': 'janimeister-site-build/1.0' },
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const xml = await res.text();
-    const videos = parseFeed(xml);
-    if (!videos.length) throw new Error('Feed parsed to zero entries');
+    const apiKey = process.env.YT_API_KEY;
+    let videos;
+    if (apiKey) {
+      console.log('Using YouTube Data API v3...');
+      videos = await fetchViaApi(CHANNEL_ID, apiKey);
+    } else {
+      console.warn('⚠ YT_API_KEY not set; falling back to RSS feed (15 videos max).');
+      videos = await fetchViaRss(CHANNEL_ID);
+    }
+    if (!videos.length) throw new Error('Feed returned zero entries');
 
     const data = {
       channelId: CHANNEL_ID,
@@ -93,20 +155,14 @@ async function main() {
     await writeFile(OUT, JSON.stringify(data, null, 2), 'utf8');
     console.log(`✔ Wrote ${videos.length} videos to ${OUT}`);
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     if (await fileExists(OUT)) {
-      console.warn(`⚠ Live fetch failed (${err.message}); keeping existing ${OUT}.`);
+      console.warn(`⚠ Live fetch failed (${message}); keeping existing ${OUT}.`);
       return;
     }
-    // Last-ditch fallback so the build still succeeds.
-    const data = {
-      channelId: CHANNEL_ID,
-      channelTitle: CHANNEL_TITLE,
-      channelUrl: CHANNEL_URL,
-      fetchedAt: new Date().toISOString(),
-      videos: [],
-    };
-    await writeFile(OUT, JSON.stringify(data, null, 2), 'utf8');
-    console.warn(`⚠ Live fetch failed (${err.message}); wrote empty placeholder.`);
+    // No existing file to fall back to — fail the build so a deploy is never
+    // published with an empty video list.
+    throw err instanceof Error ? err : new Error(message);
   }
 }
 

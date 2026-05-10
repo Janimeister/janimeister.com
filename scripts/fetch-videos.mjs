@@ -6,8 +6,9 @@
 // Uses YouTube Data API v3 when YT_API_KEY is set (up to 200 videos).
 // Falls back to the RSS feed (15 videos) when the key is absent.
 //
-// If the network is unavailable (e.g. offline CI), keeps the previous file
-// when present and exits 0; only fails if there is no fallback at all.
+// If the network is unavailable (e.g. offline local dev), keeps the previous
+// file when one already exists and exits 0. Fails the build when the fetch
+// fails and no previous file is present (e.g. fresh CI checkout).
 
 import { writeFile, mkdir, access, constants as fsConstants } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
@@ -158,16 +159,9 @@ async function main() {
       console.warn(`⚠ Live fetch failed (${err.message}); keeping existing ${OUT}.`);
       return;
     }
-    // Last-ditch fallback so the build still succeeds.
-    const data = {
-      channelId: CHANNEL_ID,
-      channelTitle: CHANNEL_TITLE,
-      channelUrl: CHANNEL_URL,
-      fetchedAt: new Date().toISOString(),
-      videos: [],
-    };
-    await writeFile(OUT, JSON.stringify(data, null, 2), 'utf8');
-    console.warn(`⚠ Live fetch failed (${err.message}); wrote empty placeholder.`);
+    // No existing file to fall back to — fail the build so a deploy is never
+    // published with an empty video list.
+    throw err;
   }
 }
 

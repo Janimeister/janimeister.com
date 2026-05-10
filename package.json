@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.9.0"
+  },
   "description": "Personal site for the Janimeister YouTube channel — FromSoftware boss kills.",
   "scripts": {
     "prebuild": "node --env-file-if-exists .env scripts/fetch-videos.mjs",

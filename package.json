@@ -5,11 +5,11 @@
   "type": "module",
   "description": "Personal site for the Janimeister YouTube channel — FromSoftware boss kills.",
   "scripts": {
-    "prebuild": "node scripts/fetch-videos.mjs",
+    "prebuild": "node --env-file-if-exists .env scripts/fetch-videos.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "fetch:videos": "node scripts/fetch-videos.mjs",
+    "fetch:videos": "node --env-file-if-exists .env scripts/fetch-videos.mjs",
     "lint": "tsc -b --pretty",
     "test": "jest",
     "test:e2e": "playwright test",

@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     name: Build & Type Check
+    # Runs `npm run build` which invokes the `prebuild` script (fetch-videos.mjs)
+    # followed by tsc type-check and vite build, catching type errors and broken
+    # imports on every PR before they reach the deploy workflow.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

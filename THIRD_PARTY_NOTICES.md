@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-This document covers the direct dependencies declared in this project's `package.json`. Their licenses and copyright notices are listed below. When multiple packages use the same license text, the full text is reproduced once and referenced from the other package entries.
+This document covers the direct dependencies declared in this project's `package.json`, using the resolved package versions recorded in `package-lock.json`. Their licenses and copyright notices are listed below. License texts may be reproduced inline or referenced from another package entry when the same license text already appears elsewhere in this document.
 
 Packages included: react, react-dom, vite, @vitejs/plugin-react, tailwindcss, @tailwindcss/vite, typescript, jest, jest-environment-jsdom, ts-jest, ts-node, @testing-library/jest-dom, @testing-library/react, @testing-library/user-event, @playwright/test, @axe-core/playwright, wrangler, @types/jest, @types/node, @types/react, @types/react-dom.
 

@@ -18,11 +18,14 @@ export function markdownToHtml(md: string): string {
   const escapeHtml = (s: string): string =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  const inlineMarkdown = (line: string): string =>
-    line
+  const inlineMarkdown = (line: string): string => {
+    // Escape HTML first, then apply markdown transformations
+    let escaped = escapeHtml(line);
+    return escaped
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer noopener">$1</a>')
       .replace(/`([^`]+)`/g, '<code>$1</code>');
+  };
 
   for (const rawLine of lines) {
     const line = rawLine;

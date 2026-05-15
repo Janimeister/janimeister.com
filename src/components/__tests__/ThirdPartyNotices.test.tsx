@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '../../test/test-utils';
+import { render, screen, fireEvent, waitFor } from '../../test/test-utils';
 import ThirdPartyNotices, { markdownToHtml, NOTICES_HASH } from '../ThirdPartyNotices';
 
 describe('markdownToHtml', () => {
@@ -79,34 +79,40 @@ describe('ThirdPartyNotices', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('renders dialog when hash matches', () => {
+  it('renders dialog when hash matches', async () => {
     window.location.hash = NOTICES_HASH;
     render(<ThirdPartyNotices />);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: /third party notices/i })).toBeInTheDocument();
+    // Wait for async content load to settle
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
   });
 
-  it('closes when close button is clicked', () => {
+  it('closes when close button is clicked', async () => {
     window.location.hash = NOTICES_HASH;
     render(<ThirdPartyNotices />);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // Wait for content to load before interacting
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByLabelText(/close third party notices/i));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('locks body scroll when open', () => {
+  it('locks body scroll when open', async () => {
     window.location.hash = NOTICES_HASH;
     render(<ThirdPartyNotices />);
     expect(document.body.style.overflow).toBe('hidden');
+    // Wait for content load to settle
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
   });
 
-  it('responds to hashchange event', () => {
+  it('responds to hashchange event', async () => {
     render(<ThirdPartyNotices />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     window.location.hash = NOTICES_HASH;
     fireEvent(window, new HashChangeEvent('hashchange'));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // Wait for async content load to settle
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
   });
 });

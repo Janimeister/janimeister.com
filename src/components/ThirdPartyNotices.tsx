@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactElement } from 'react';
-import noticesRaw from '../../THIRD_PARTY_NOTICES.md?raw';
 
 /** Minimal Markdown-to-HTML converter for our THIRD_PARTY_NOTICES.md structure. */
 export function markdownToHtml(md: string): string {
@@ -95,12 +94,22 @@ export const NOTICES_HASH = '#third-party-notices';
 
 export default function ThirdPartyNotices(): ReactElement | null {
   const [visible, setVisible] = useState(() => window.location.hash === NOTICES_HASH);
+  const [noticesHtml, setNoticesHtml] = useState<string | null>(null);
 
   useEffect(() => {
     const onHash = () => setVisible(window.location.hash === NOTICES_HASH);
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  // Lazy-load the markdown only when the modal is first opened
+  useEffect(() => {
+    if (visible && noticesHtml === null) {
+      import('../../THIRD_PARTY_NOTICES.md?raw').then((m: { default: string }) => {
+        setNoticesHtml(markdownToHtml(m.default));
+      });
+    }
+  }, [visible, noticesHtml]);
 
   // Lock body scroll when overlay is open
   useEffect(() => {
@@ -143,10 +152,18 @@ export default function ThirdPartyNotices(): ReactElement | null {
         </div>
 
         {/* Scrollable content */}
-        <div
-          className="notices-content flex-1 overflow-y-auto px-6 py-6 sm:px-10"
-          dangerouslySetInnerHTML={{ __html: markdownToHtml(noticesRaw) }}
-        />
+        {noticesHtml === null ? (
+          <div className="flex flex-1 items-center justify-center">
+            <p className="font-display text-xs tracking-[0.25em] uppercase text-parchment-dim animate-pulse">
+              Loading…
+            </p>
+          </div>
+        ) : (
+          <div
+            className="notices-content flex-1 overflow-y-auto px-6 py-6 sm:px-10"
+            dangerouslySetInnerHTML={{ __html: noticesHtml }}
+          />
+        )}
       </div>
     </div>
   );

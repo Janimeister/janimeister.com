@@ -13,7 +13,7 @@ const config: Config = {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
-    '\\?raw$': '<rootDir>/src/test/raw-file-mock.ts',
+    '^.+\\?raw$': '<rootDir>/src/test/raw-file-mock.ts',
   },
   setupFiles: ['<rootDir>/src/test/setup-env.ts'],
   testMatch: ['**/__tests__/**/*.test.{ts,tsx}'],

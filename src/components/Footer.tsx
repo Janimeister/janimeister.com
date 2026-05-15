@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import { NOTICES_HASH } from './ThirdPartyNotices';
 
 export default function Footer(): ReactElement {
   return (
@@ -21,6 +22,12 @@ export default function Footer(): ReactElement {
             className="font-display tracking-[0.25em] uppercase text-parchment-dim hover:text-gold-bright transition"
           >
             About
+          </a>
+          <a
+            href={NOTICES_HASH}
+            className="font-display tracking-[0.25em] uppercase text-parchment-dim hover:text-gold-bright transition"
+          >
+            Third Party Notices
           </a>
         </nav>
       </div>

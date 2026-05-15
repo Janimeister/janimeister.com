@@ -66,5 +66,28 @@ test.describe('Navigation', () => {
     const youtubeLink = footerNav.getByRole('link', { name: /youtube/i });
     await expect(youtubeLink).toHaveAttribute('href', /youtube\.com/);
     await expect(youtubeLink).toHaveAttribute('target', '_blank');
+
+    const noticesLink = footerNav.getByRole('link', { name: /third party notices/i });
+    await expect(noticesLink).toHaveAttribute('href', '#third-party-notices');
+  });
+
+  test('third party notices dialog opens and closes', async ({ page }) => {
+    const footerNav = page.locator('nav[aria-label="Footer"]');
+    const noticesLink = footerNav.getByRole('link', { name: /third party notices/i });
+
+    // Scroll to footer and click the link
+    await noticesLink.scrollIntoViewIfNeeded();
+    await noticesLink.click();
+
+    // Dialog should be visible
+    const dialog = page.getByRole('dialog', { name: /third party notices/i });
+    await expect(dialog).toBeVisible();
+
+    // Should contain rendered content (e.g. heading from the markdown)
+    await expect(dialog.locator('h1, h2').first()).toBeVisible();
+
+    // Close the dialog
+    await page.getByLabel(/close third party notices/i).click();
+    await expect(dialog).toBeHidden();
   });
 });

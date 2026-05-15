@@ -22,6 +22,12 @@ describe('Footer', () => {
     expect(aboutLink).toHaveAttribute('href', '#about');
   });
 
+  it('renders the Third Party Notices link', () => {
+    render(<Footer />);
+    const noticesLink = screen.getByRole('link', { name: /third party notices/i });
+    expect(noticesLink).toHaveAttribute('href', '#third-party-notices');
+  });
+
   it('has a footer navigation with aria-label', () => {
     render(<Footer />);
     expect(screen.getByRole('navigation', { name: /footer/i })).toBeInTheDocument();

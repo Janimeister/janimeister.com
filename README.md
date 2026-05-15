@@ -85,7 +85,7 @@ viewports. The suite includes:
 
 - **home.spec.ts** — core page rendering, search, cookie consent, mobile menu
 - **accessibility.spec.ts** — axe-core WCAG audit, skip link, keyboard focus, reduced motion
-- **navigation.spec.ts** — nav links, sticky header, footer, external link safety
+- **navigation.spec.ts** — nav links, sticky header, footer, external link safety, third-party notices dialog
 - **videos.spec.ts** — video card structure, sorting, filtering, lazy loading
 - **visual.spec.ts** — error-free load, meta tags, responsive layout, fonts
 

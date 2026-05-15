@@ -6,6 +6,7 @@ import About from './components/About';
 import Footer from './components/Footer';
 import EmberField from './components/EmberField';
 import CookieNotice from './components/CookieNotice';
+import ThirdPartyNotices from './components/ThirdPartyNotices';
 import { OrnamentDivider } from './components/Ornament';
 
 // Lazy-load the heaviest section so it streams in.
@@ -42,6 +43,7 @@ export default function App(): ReactElement {
 
       <Footer />
       <CookieNotice />
+      <ThirdPartyNotices />
     </div>
   );
 }

@@ -71,6 +71,9 @@ describe('markdownToHtml', () => {
   it('converts emphasis text', () => {
     expect(markdownToHtml('*italic*')).toContain('<em>italic</em>');
     expect(markdownToHtml('*See MIT License*')).toContain('<em>See MIT License</em>');
+    // Multiple emphasis spans on the same line
+    expect(markdownToHtml('*foo* and *bar*')).toContain('<em>foo</em>');
+    expect(markdownToHtml('*foo* and *bar*')).toContain('<em>bar</em>');
   });
 
   it('converts inline code', () => {

@@ -168,13 +168,22 @@ describe('ThirdPartyNotices', () => {
     document.body.removeChild(btn);
   });
 
-  it('traps Tab forward at the last focusable element', async () => {
-    // jsdom doesn't compute layout so offsetParent is always null; mock it so
-    // getFocusable can find visible elements and the trap handler runs fully.
-    const offsetParentSpy = jest
-      .spyOn(HTMLElement.prototype, 'offsetParent', 'get')
-      .mockReturnValue(document.body);
-    try {
+  describe('focus trap', () => {
+    let offsetParentSpy: ReturnType<typeof jest.spyOn>;
+
+    beforeEach(() => {
+      // jsdom doesn't compute layout so offsetParent is always null; mock it so
+      // getFocusable can find visible elements and the trap handler runs fully.
+      offsetParentSpy = jest
+        .spyOn(HTMLElement.prototype, 'offsetParent', 'get')
+        .mockReturnValue(document.body);
+    });
+
+    afterEach(() => {
+      offsetParentSpy.mockRestore();
+    });
+
+    it('traps Tab forward at the last focusable element', async () => {
       window.location.hash = NOTICES_HASH;
       render(<ThirdPartyNotices />);
       await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
@@ -188,18 +197,9 @@ describe('ThirdPartyNotices', () => {
       expect(preventDefaultSpy).toHaveBeenCalled();
       expect(dialog.contains(document.activeElement)).toBe(true);
       preventDefaultSpy.mockRestore();
-    } finally {
-      offsetParentSpy.mockRestore();
-    }
-  });
+    });
 
-  it('traps Shift+Tab backward at the first focusable element', async () => {
-    // jsdom doesn't compute layout so offsetParent is always null; mock it so
-    // getFocusable can find visible elements and the trap handler runs fully.
-    const offsetParentSpy = jest
-      .spyOn(HTMLElement.prototype, 'offsetParent', 'get')
-      .mockReturnValue(document.body);
-    try {
+    it('traps Shift+Tab backward at the first focusable element', async () => {
       window.location.hash = NOTICES_HASH;
       render(<ThirdPartyNotices />);
       await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
@@ -213,9 +213,7 @@ describe('ThirdPartyNotices', () => {
       expect(preventDefaultSpy).toHaveBeenCalled();
       expect(dialog.contains(document.activeElement)).toBe(true);
       preventDefaultSpy.mockRestore();
-    } finally {
-      offsetParentSpy.mockRestore();
-    }
+    });
   });
 
   it('responds to hashchange event', async () => {

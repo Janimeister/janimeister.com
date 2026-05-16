@@ -24,6 +24,7 @@ export function markdownToHtml(md: string): string {
     const escaped = escapeHtml(line);
     return escaped
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
       .replace(
         /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
         (_match, text, url) =>

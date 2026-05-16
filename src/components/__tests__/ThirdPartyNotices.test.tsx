@@ -68,9 +68,15 @@ describe('markdownToHtml', () => {
     expect(result).toContain('</p>');
   });
 
+  it('converts emphasis text', () => {
+    expect(markdownToHtml('*italic*')).toContain('<em>italic</em>');
+    expect(markdownToHtml('*See MIT License*')).toContain('<em>See MIT License</em>');
+  });
+
   it('converts inline code', () => {
     expect(markdownToHtml('Use `npm install`')).toContain('<code>npm install</code>');
   });
+
 });
 
 describe('NOTICES_HASH', () => {
@@ -202,13 +208,16 @@ describe('ThirdPartyNotices', () => {
       await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
 
       const dialog = screen.getByRole('dialog');
-      const closeButton = screen.getByLabelText(/close third party notices/i);
-      closeButton.focus();
+      // The mock markdown renders: close button (1st), link (2nd), summary (3rd/last).
+      // Focus the last element so Tab triggers the wrap-around trap.
+      const summary = dialog.querySelector('summary') as HTMLElement;
+      summary.focus();
 
       const preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
       fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
       expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(dialog.contains(document.activeElement)).toBe(true);
+      // Wrapped to the first focusable element (close button)
+      expect(document.activeElement).toBe(screen.getByLabelText(/close third party notices/i));
       preventDefaultSpy.mockRestore();
     });
 
@@ -218,13 +227,16 @@ describe('ThirdPartyNotices', () => {
       await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
 
       const dialog = screen.getByRole('dialog');
+      // Focus the first focusable element so Shift+Tab triggers the wrap-around trap.
       const closeButton = screen.getByLabelText(/close third party notices/i);
       closeButton.focus();
 
       const preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
       fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
       expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(dialog.contains(document.activeElement)).toBe(true);
+      // Wrapped to the last focusable element (summary)
+      const summary = dialog.querySelector('summary') as HTMLElement;
+      expect(document.activeElement).toBe(summary);
       preventDefaultSpy.mockRestore();
     });
   });

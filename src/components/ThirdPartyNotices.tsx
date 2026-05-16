@@ -120,6 +120,19 @@ export function markdownToHtml(md: string): string {
 
 export const NOTICES_HASH = '#third-party-notices';
 
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+/** Returns visible, non-disabled focusable descendants of `root`. */
+function getFocusable(root: HTMLElement): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (node) =>
+      !node.hasAttribute('disabled') &&
+      !node.closest('[hidden]') &&
+      node.offsetParent !== null,
+  );
+}
+
 export default function ThirdPartyNotices(): ReactElement | null {
   const [visible, setVisible] = useState(() => window.location.hash === NOTICES_HASH);
   const [noticesHtml, setNoticesHtml] = useState<string | null>(null);
@@ -140,9 +153,7 @@ export default function ThirdPartyNotices(): ReactElement | null {
       const id = window.setTimeout(() => {
         const el = dialogRef.current;
         if (!el) return;
-        const first = el.querySelector<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        );
+        const [first] = getFocusable(el);
         (first ?? el).focus();
       }, 0);
       return () => window.clearTimeout(id);
@@ -160,11 +171,7 @@ export default function ThirdPartyNotices(): ReactElement | null {
       if (e.key !== 'Tab') return;
       const el = dialogRef.current;
       if (!el) return;
-      const focusable = Array.from(
-        el.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        ),
-      ).filter((node) => !node.hasAttribute('disabled'));
+      const focusable = getFocusable(el);
       if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];

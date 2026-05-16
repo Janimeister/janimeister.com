@@ -256,7 +256,7 @@ export default function ThirdPartyNotices(): ReactElement | null {
         {loadError ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4">
             <p className="font-display text-xs tracking-[0.25em] uppercase text-parchment-dim">
-              Failed to load notices.
+              Failed to load notices. Please try again.
             </p>
             <button
               type="button"

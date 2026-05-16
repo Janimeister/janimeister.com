@@ -254,10 +254,17 @@ export default function ThirdPartyNotices(): ReactElement | null {
 
         {/* Scrollable content */}
         {loadError ? (
-          <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4">
             <p className="font-display text-xs tracking-[0.25em] uppercase text-parchment-dim">
-              Failed to load notices. Please try again later.
+              Failed to load notices.
             </p>
+            <button
+              type="button"
+              onClick={() => setLoadError(false)}
+              className="font-display text-xs tracking-[0.25em] uppercase text-gold-bright underline underline-offset-2 hover:text-gold"
+            >
+              Retry
+            </button>
           </div>
         ) : noticesHtml === null ? (
           <div className="flex flex-1 items-center justify-center">

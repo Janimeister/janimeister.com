@@ -66,5 +66,31 @@ test.describe('Navigation', () => {
     const youtubeLink = footerNav.getByRole('link', { name: /youtube/i });
     await expect(youtubeLink).toHaveAttribute('href', /youtube\.com/);
     await expect(youtubeLink).toHaveAttribute('target', '_blank');
+
+    const noticesLink = footerNav.getByRole('link', { name: /third party notices/i });
+    await expect(noticesLink).toHaveAttribute('href', '#third-party-notices');
+  });
+
+  test('third party notices dialog opens and closes', async ({ page }) => {
+    const footerNav = page.locator('nav[aria-label="Footer"]');
+    const noticesLink = footerNav.getByRole('link', { name: /third party notices/i });
+
+    // Scroll to footer and click the link
+    await noticesLink.scrollIntoViewIfNeeded();
+    await noticesLink.click();
+
+    // Dialog should be visible
+    const dialog = page.getByRole('dialog', { name: /third party notices/i });
+    await expect(dialog).toBeVisible();
+
+    // Should contain rendered markdown content from the notices body
+    const noticesBody = dialog.locator('.notices-content');
+    await expect(noticesBody).toBeVisible();
+    // "React" is a known top-level section heading in THIRD_PARTY_NOTICES.md
+    await expect(noticesBody.locator('h2', { hasText: 'React' }).first()).toBeVisible();
+
+    // Close the dialog
+    await page.getByLabel(/close third party notices/i).click();
+    await expect(dialog).toBeHidden();
   });
 });

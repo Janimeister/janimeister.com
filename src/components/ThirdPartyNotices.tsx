@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 /** Minimal Markdown-to-HTML converter for our THIRD_PARTY_NOTICES.md structure. */
 export function markdownToHtml(md: string): string {
@@ -15,14 +15,20 @@ export function markdownToHtml(md: string): string {
   };
 
   const escapeHtml = (s: string): string =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   const inlineMarkdown = (line: string): string => {
-    // Escape HTML first, then apply markdown transformations
-    let escaped = escapeHtml(line);
+    // Escape HTML first, then apply markdown transformations.
+    // Since escapeHtml already escapes &, <, >, and " the captured URL is safe
+    // for use directly inside an href attribute.
+    const escaped = escapeHtml(line);
     return escaped
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer noopener">$1</a>')
+      .replace(
+        /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+        (_match, text, url) =>
+          `<a href="${url}" target="_blank" rel="noreferrer noopener">${text}</a>`,
+      )
       .replace(/`([^`]+)`/g, '<code>$1</code>');
   };
 
@@ -47,10 +53,32 @@ export function markdownToHtml(md: string): string {
       continue;
     }
 
-    // HTML pass-through (<details>, <summary>, etc.)
-    if (/^\s*<\/?(?:details|summary)/.test(line)) {
+    // HTML pass-through (<details>, <summary>) — emit only the allowlisted tag shape,
+    // never pass through attributes or arbitrary content to prevent XSS.
+    if (/^\s*<details[\s>\/]/.test(line)) {
       closeParagraph();
-      html.push(line);
+      html.push('<details>');
+      continue;
+    }
+    if (/^\s*<\/details\s*>/.test(line)) {
+      closeParagraph();
+      html.push('</details>');
+      continue;
+    }
+    const summaryMatch = line.match(/^\s*<summary>(.*?)<\/summary>\s*$/);
+    if (summaryMatch) {
+      closeParagraph();
+      html.push(`<summary>${escapeHtml(summaryMatch[1])}</summary>`);
+      continue;
+    }
+    if (/^\s*<summary\s*\/?>/.test(line)) {
+      closeParagraph();
+      html.push('<summary>');
+      continue;
+    }
+    if (/^\s*<\/summary\s*>/.test(line)) {
+      closeParagraph();
+      html.push('</summary>');
       continue;
     }
 
@@ -95,12 +123,66 @@ export const NOTICES_HASH = '#third-party-notices';
 export default function ThirdPartyNotices(): ReactElement | null {
   const [visible, setVisible] = useState(() => window.location.hash === NOTICES_HASH);
   const [noticesHtml, setNoticesHtml] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const onHash = () => setVisible(window.location.hash === NOTICES_HASH);
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  // Capture previously focused element, then move focus into dialog on open
+  useEffect(() => {
+    if (visible) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      // Defer so the dialog is painted before we move focus
+      const id = window.setTimeout(() => {
+        const el = dialogRef.current;
+        if (!el) return;
+        const first = el.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        (first ?? el).focus();
+      }, 0);
+      return () => window.clearTimeout(id);
+    } else {
+      // Restore focus when dialog closes
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+    }
+  }, [visible]);
+
+  // Trap focus inside the dialog
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const el = dialogRef.current;
+      if (!el) return;
+      const focusable = Array.from(
+        el.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((node) => !node.hasAttribute('disabled'));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [visible]);
 
   // Lazy-load the markdown only when the modal is first opened
   useEffect(() => {
@@ -130,10 +212,12 @@ export default function ThirdPartyNotices(): ReactElement | null {
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 flex items-start justify-center bg-ash/95 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Third Party Notices"
+      tabIndex={-1}
     >
       <div className="relative mx-auto mt-4 mb-4 flex h-[calc(100vh-2rem)] w-full max-w-4xl flex-col rounded-sm border border-gold/30 bg-ash-2/95 shadow-[0_0_60px_rgba(0,0,0,0.8)]">
         {/* Header */}

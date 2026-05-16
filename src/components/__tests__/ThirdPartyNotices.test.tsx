@@ -46,6 +46,21 @@ describe('markdownToHtml', () => {
     expect(result).toContain('</details>');
   });
 
+  it('sanitizes summary content and strips details/summary attributes', () => {
+    const md = '<details class="evil">\n<summary><script>alert(1)</script></summary>\n</details>';
+    const result = markdownToHtml(md);
+    expect(result).toContain('<details>');
+    expect(result).not.toContain('class="evil"');
+    expect(result).not.toContain('<script>');
+    expect(result).toContain('&lt;script&gt;');
+  });
+
+  it('escapes quotes in link URLs', () => {
+    const result = markdownToHtml('[link](https://example.com/?a="b")');
+    expect(result).not.toContain('"b"');
+    expect(result).toContain('&quot;b&quot;');
+  });
+
   it('wraps regular text in paragraphs', () => {
     const result = markdownToHtml('Hello world');
     expect(result).toContain('<p>');

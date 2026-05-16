@@ -83,8 +83,11 @@ test.describe('Navigation', () => {
     const dialog = page.getByRole('dialog', { name: /third party notices/i });
     await expect(dialog).toBeVisible();
 
-    // Should contain rendered content (e.g. heading from the markdown)
-    await expect(dialog.locator('h1, h2').first()).toBeVisible();
+    // Should contain rendered markdown content from the notices body
+    const noticesBody = dialog.locator('.notices-content');
+    await expect(noticesBody).toBeVisible();
+    // "React" is a known top-level section heading in THIRD_PARTY_NOTICES.md
+    await expect(noticesBody.locator('h2', { hasText: 'React' }).first()).toBeVisible();
 
     // Close the dialog
     await page.getByLabel(/close third party notices/i).click();

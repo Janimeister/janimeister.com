@@ -112,6 +112,15 @@ describe('ThirdPartyNotices', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('closes on Escape key', async () => {
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('locks body scroll when open', async () => {
     window.location.hash = NOTICES_HASH;
     render(<ThirdPartyNotices />);

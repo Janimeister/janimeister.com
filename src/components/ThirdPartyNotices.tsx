@@ -121,7 +121,7 @@ export function markdownToHtml(md: string): string {
 export const NOTICES_HASH = '#third-party-notices';
 
 const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  'button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
 /** Returns visible, non-disabled focusable descendants of `root`. */
 function getFocusable(root: HTMLElement): HTMLElement[] {
@@ -138,6 +138,11 @@ export default function ThirdPartyNotices(): ReactElement | null {
   const [noticesHtml, setNoticesHtml] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  const close = () => {
+    history.pushState(null, '', window.location.pathname + window.location.search);
+    setVisible(false);
+  };
 
   useEffect(() => {
     const onHash = () => setVisible(window.location.hash === NOTICES_HASH);
@@ -164,10 +169,15 @@ export default function ThirdPartyNotices(): ReactElement | null {
     }
   }, [visible]);
 
-  // Trap focus inside the dialog
+  // Trap focus inside the dialog and close on Escape
   useEffect(() => {
     if (!visible) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
       if (e.key !== 'Tab') return;
       const el = dialogRef.current;
       if (!el) return;
@@ -211,11 +221,6 @@ export default function ThirdPartyNotices(): ReactElement | null {
   }, [visible]);
 
   if (!visible) return null;
-
-  const close = () => {
-    history.pushState(null, '', window.location.pathname + window.location.search);
-    setVisible(false);
-  };
 
   return (
     <div

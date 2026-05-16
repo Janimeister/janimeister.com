@@ -261,6 +261,7 @@ export default function ThirdPartyNotices(): ReactElement | null {
             <button
               type="button"
               onClick={() => setLoadError(false)}
+              aria-label="Retry loading third-party notices"
               className="font-display text-xs tracking-[0.25em] uppercase text-gold-bright underline underline-offset-2 hover:text-gold"
             >
               Retry

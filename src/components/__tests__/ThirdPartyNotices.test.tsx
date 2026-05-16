@@ -129,6 +129,78 @@ describe('ThirdPartyNotices', () => {
     await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
   });
 
+  it('restores previous body overflow value on close', async () => {
+    document.body.style.overflow = 'scroll';
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    expect(document.body.style.overflow).toBe('hidden');
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText(/close third party notices/i));
+    expect(document.body.style.overflow).toBe('scroll');
+    document.body.style.overflow = '';
+  });
+
+  it('moves focus into dialog when opened', async () => {
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+    // Use fake timers to flush the setTimeout(0) that moves focus
+    jest.useFakeTimers();
+    jest.runAllTimers();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    jest.useRealTimers();
+  });
+
+  it('restores focus to previously focused element after close', async () => {
+    // Create a button in the document to hold focus before opening the dialog
+    const btn = document.createElement('button');
+    btn.textContent = 'trigger';
+    document.body.appendChild(btn);
+    btn.focus();
+    expect(document.activeElement).toBe(btn);
+
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText(/close third party notices/i));
+    expect(document.activeElement).toBe(btn);
+
+    document.body.removeChild(btn);
+  });
+
+  it('traps Tab forward at the last focusable element', async () => {
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+    const dialog = screen.getByRole('dialog');
+    const closeButton = screen.getByLabelText(/close third party notices/i);
+    // Force focus to the close button (last/only focusable element)
+    closeButton.focus();
+
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
+    // Focus should wrap to the first focusable element (also the close button when alone)
+    expect(dialog.contains(document.activeElement)).toBe(true);
+  });
+
+  it('traps Shift+Tab backward at the first focusable element', async () => {
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+    const dialog = screen.getByRole('dialog');
+    const closeButton = screen.getByLabelText(/close third party notices/i);
+    // Force focus to the close button (first/only focusable element)
+    closeButton.focus();
+
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    // Focus should wrap to the last focusable element (also the close button when alone)
+    expect(dialog.contains(document.activeElement)).toBe(true);
+  });
+
   it('responds to hashchange event', async () => {
     render(<ThirdPartyNotices />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

@@ -212,9 +212,10 @@ export default function ThirdPartyNotices(): ReactElement | null {
   // Lock body scroll when overlay is open
   useEffect(() => {
     if (visible) {
+      const prev = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
-        document.body.style.overflow = '';
+        document.body.style.overflow = prev;
       };
     }
   }, [visible]);

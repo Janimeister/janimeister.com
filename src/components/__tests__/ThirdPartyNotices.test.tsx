@@ -145,12 +145,9 @@ describe('ThirdPartyNotices', () => {
     window.location.hash = NOTICES_HASH;
     render(<ThirdPartyNotices />);
     await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
-    // Use fake timers to flush the setTimeout(0) that moves focus
-    jest.useFakeTimers();
-    jest.runAllTimers();
+    // waitFor polls until the deferred setTimeout(0) fires and focus moves into the dialog
     const dialog = screen.getByRole('dialog');
-    expect(dialog.contains(document.activeElement)).toBe(true);
-    jest.useRealTimers();
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
   });
 
   it('restores focus to previously focused element after close', async () => {
@@ -172,33 +169,53 @@ describe('ThirdPartyNotices', () => {
   });
 
   it('traps Tab forward at the last focusable element', async () => {
-    window.location.hash = NOTICES_HASH;
-    render(<ThirdPartyNotices />);
-    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+    // jsdom doesn't compute layout so offsetParent is always null; mock it so
+    // getFocusable can find visible elements and the trap handler runs fully.
+    const offsetParentSpy = jest
+      .spyOn(HTMLElement.prototype, 'offsetParent', 'get')
+      .mockReturnValue(document.body);
+    try {
+      window.location.hash = NOTICES_HASH;
+      render(<ThirdPartyNotices />);
+      await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
 
-    const dialog = screen.getByRole('dialog');
-    const closeButton = screen.getByLabelText(/close third party notices/i);
-    // Force focus to the close button (last/only focusable element)
-    closeButton.focus();
+      const dialog = screen.getByRole('dialog');
+      const closeButton = screen.getByLabelText(/close third party notices/i);
+      closeButton.focus();
 
-    fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
-    // Focus should wrap to the first focusable element (also the close button when alone)
-    expect(dialog.contains(document.activeElement)).toBe(true);
+      const preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(dialog.contains(document.activeElement)).toBe(true);
+      preventDefaultSpy.mockRestore();
+    } finally {
+      offsetParentSpy.mockRestore();
+    }
   });
 
   it('traps Shift+Tab backward at the first focusable element', async () => {
-    window.location.hash = NOTICES_HASH;
-    render(<ThirdPartyNotices />);
-    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+    // jsdom doesn't compute layout so offsetParent is always null; mock it so
+    // getFocusable can find visible elements and the trap handler runs fully.
+    const offsetParentSpy = jest
+      .spyOn(HTMLElement.prototype, 'offsetParent', 'get')
+      .mockReturnValue(document.body);
+    try {
+      window.location.hash = NOTICES_HASH;
+      render(<ThirdPartyNotices />);
+      await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
 
-    const dialog = screen.getByRole('dialog');
-    const closeButton = screen.getByLabelText(/close third party notices/i);
-    // Force focus to the close button (first/only focusable element)
-    closeButton.focus();
+      const dialog = screen.getByRole('dialog');
+      const closeButton = screen.getByLabelText(/close third party notices/i);
+      closeButton.focus();
 
-    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
-    // Focus should wrap to the last focusable element (also the close button when alone)
-    expect(dialog.contains(document.activeElement)).toBe(true);
+      const preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(dialog.contains(document.activeElement)).toBe(true);
+      preventDefaultSpy.mockRestore();
+    } finally {
+      offsetParentSpy.mockRestore();
+    }
   });
 
   it('responds to hashchange event', async () => {

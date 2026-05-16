@@ -49,7 +49,6 @@ export function markdownToHtml(md: string): string {
     }
     if (inCode) {
       html.push(escapeHtml(line));
-      html.push('\n');
       continue;
     }
 

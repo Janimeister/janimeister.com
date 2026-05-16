@@ -73,7 +73,7 @@ export function markdownToHtml(md: string): string {
       html.push('</details>');
       continue;
     }
-    const summaryMatch = line.match(/^\s*<summary>(.*?)<\/summary>\s*$/);
+    const summaryMatch = line.match(/^\s*<summary(?:\s[^>]*)?>(.+?)<\/summary>\s*$/);
     if (summaryMatch) {
       closeParagraph();
       html.push(`<summary>${escapeHtml(summaryMatch[1])}</summary>`);

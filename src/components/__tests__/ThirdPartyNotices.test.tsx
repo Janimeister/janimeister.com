@@ -55,6 +55,14 @@ describe('markdownToHtml', () => {
     expect(result).toContain('&lt;script&gt;');
   });
 
+  it('strips attributes from summary open tag', () => {
+    const md = '<details>\n<summary class="foo" data-x="bar">Label</summary>\n</details>';
+    const result = markdownToHtml(md);
+    expect(result).toContain('<summary>Label</summary>');
+    expect(result).not.toContain('class=');
+    expect(result).not.toContain('data-x=');
+  });
+
   it('escapes quotes in link URLs', () => {
     const result = markdownToHtml('[link](https://example.com/?a="b")');
     expect(result).not.toContain('"b"');
@@ -205,6 +213,7 @@ describe('ThirdPartyNotices', () => {
 
   describe('focus trap', () => {
     let offsetParentSpy: ReturnType<typeof jest.spyOn>;
+    let preventDefaultSpy: ReturnType<typeof jest.spyOn>;
 
     beforeEach(() => {
       // jsdom doesn't compute layout so offsetParent is always null; mock it so
@@ -216,6 +225,7 @@ describe('ThirdPartyNotices', () => {
 
     afterEach(() => {
       offsetParentSpy.mockRestore();
+      preventDefaultSpy?.mockRestore();
     });
 
     it('traps Tab forward at the last focusable element', async () => {
@@ -229,12 +239,11 @@ describe('ThirdPartyNotices', () => {
       const summary = dialog.querySelector('summary') as HTMLElement;
       summary.focus();
 
-      const preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
+      preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
       fireEvent.keyDown(document, { key: 'Tab', shiftKey: false });
       expect(preventDefaultSpy).toHaveBeenCalled();
       // Wrapped to the first focusable element (close button)
       expect(document.activeElement).toBe(screen.getByLabelText(/close third party notices/i));
-      preventDefaultSpy.mockRestore();
     });
 
     it('traps Shift+Tab backward at the first focusable element', async () => {
@@ -247,13 +256,12 @@ describe('ThirdPartyNotices', () => {
       const closeButton = screen.getByLabelText(/close third party notices/i);
       closeButton.focus();
 
-      const preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
+      preventDefaultSpy = jest.spyOn(Event.prototype, 'preventDefault');
       fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
       expect(preventDefaultSpy).toHaveBeenCalled();
       // Wrapped to the last focusable element (summary)
       const summary = dialog.querySelector('summary') as HTMLElement;
       expect(document.activeElement).toBe(summary);
-      preventDefaultSpy.mockRestore();
     });
   });
 
@@ -265,13 +273,15 @@ describe('ThirdPartyNotices', () => {
     const replaceStateSpy = jest.spyOn(history, 'replaceState');
     const pushStateSpy = jest.spyOn(history, 'pushState');
 
-    fireEvent.click(screen.getByLabelText(/close third party notices/i));
+    try {
+      fireEvent.click(screen.getByLabelText(/close third party notices/i));
 
-    expect(replaceStateSpy).toHaveBeenCalled();
-    expect(pushStateSpy).not.toHaveBeenCalled();
-
-    replaceStateSpy.mockRestore();
-    pushStateSpy.mockRestore();
+      expect(replaceStateSpy).toHaveBeenCalled();
+      expect(pushStateSpy).not.toHaveBeenCalled();
+    } finally {
+      replaceStateSpy.mockRestore();
+      pushStateSpy.mockRestore();
+    }
   });
 
   it('responds to hashchange event', async () => {

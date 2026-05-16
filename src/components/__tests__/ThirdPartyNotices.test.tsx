@@ -80,6 +80,19 @@ describe('markdownToHtml', () => {
     expect(markdownToHtml('Use `npm install`')).toContain('<code>npm install</code>');
   });
 
+  it('does not apply emphasis inside inline code spans', () => {
+    // Asterisks inside backticks must be literal, not converted to <em>.
+    const result = markdownToHtml('Use `*literal*` here');
+    expect(result).toContain('<code>*literal*</code>');
+    expect(result).not.toContain('<em>');
+  });
+
+  it('does not apply bold inside inline code spans', () => {
+    const result = markdownToHtml('See `**bold**` example');
+    expect(result).toContain('<code>**bold**</code>');
+    expect(result).not.toContain('<strong>');
+  });
+
 });
 
 describe('NOTICES_HASH', () => {

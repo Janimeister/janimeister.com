@@ -22,15 +22,23 @@ export function markdownToHtml(md: string): string {
     // Since escapeHtml already escapes &, <, >, and " the captured URL is safe
     // for use directly inside an href attribute.
     const escaped = escapeHtml(line);
-    return escaped
+    // Extract inline code spans first so that their contents are not subject to
+    // bold/emphasis/link replacements (e.g. `*literal*` must stay literal).
+    const codeSpans: string[] = [];
+    const withPlaceholders = escaped.replace(/`([^`]+)`/g, (_match, inner) => {
+      codeSpans.push(`<code>${inner}</code>`);
+      return `\x00${codeSpans.length - 1}\x00`;
+    });
+    const transformed = withPlaceholders
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(
         /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
         (_match, text, url) =>
           `<a href="${url}" target="_blank" rel="noreferrer noopener">${text}</a>`,
-      )
-      .replace(/`([^`]+)`/g, '<code>$1</code>');
+      );
+    // Restore code spans.
+    return transformed.replace(/\x00(\d+)\x00/g, (_match, idx) => codeSpans[Number(idx)]);
   };
 
   for (const rawLine of lines) {

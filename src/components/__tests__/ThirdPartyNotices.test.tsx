@@ -129,16 +129,21 @@ describe('ThirdPartyNotices', () => {
     await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
   });
 
-  it('restores previous body overflow value on close', async () => {
-    document.body.style.overflow = 'scroll';
-    window.location.hash = NOTICES_HASH;
-    render(<ThirdPartyNotices />);
-    expect(document.body.style.overflow).toBe('hidden');
-    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+  describe('restores previous body overflow value on close', () => {
+    afterEach(() => {
+      document.body.style.overflow = '';
+    });
 
-    fireEvent.click(screen.getByLabelText(/close third party notices/i));
-    expect(document.body.style.overflow).toBe('scroll');
-    document.body.style.overflow = '';
+    it('restores previous body overflow value on close', async () => {
+      document.body.style.overflow = 'scroll';
+      window.location.hash = NOTICES_HASH;
+      render(<ThirdPartyNotices />);
+      expect(document.body.style.overflow).toBe('hidden');
+      await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+      fireEvent.click(screen.getByLabelText(/close third party notices/i));
+      expect(document.body.style.overflow).toBe('scroll');
+    });
   });
 
   it('moves focus into dialog when opened', async () => {
@@ -150,22 +155,30 @@ describe('ThirdPartyNotices', () => {
     await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
   });
 
-  it('restores focus to previously focused element after close', async () => {
-    // Create a button in the document to hold focus before opening the dialog
-    const btn = document.createElement('button');
-    btn.textContent = 'trigger';
-    document.body.appendChild(btn);
-    btn.focus();
-    expect(document.activeElement).toBe(btn);
+  describe('restores focus to previously focused element after close', () => {
+    let btn: HTMLButtonElement;
 
-    window.location.hash = NOTICES_HASH;
-    render(<ThirdPartyNotices />);
-    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+    beforeEach(() => {
+      btn = document.createElement('button');
+      btn.textContent = 'trigger';
+      document.body.appendChild(btn);
+    });
 
-    fireEvent.click(screen.getByLabelText(/close third party notices/i));
-    expect(document.activeElement).toBe(btn);
+    afterEach(() => {
+      document.body.removeChild(btn);
+    });
 
-    document.body.removeChild(btn);
+    it('restores focus to previously focused element after close', async () => {
+      btn.focus();
+      expect(document.activeElement).toBe(btn);
+
+      window.location.hash = NOTICES_HASH;
+      render(<ThirdPartyNotices />);
+      await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+      fireEvent.click(screen.getByLabelText(/close third party notices/i));
+      expect(document.activeElement).toBe(btn);
+    });
   });
 
   describe('focus trap', () => {

@@ -134,7 +134,7 @@ describe('ThirdPartyNotices', () => {
       document.body.style.overflow = '';
     });
 
-    it('restores previous body overflow value on close', async () => {
+    it('restores the prior overflow style', async () => {
       document.body.style.overflow = 'scroll';
       window.location.hash = NOTICES_HASH;
       render(<ThirdPartyNotices />);
@@ -168,7 +168,7 @@ describe('ThirdPartyNotices', () => {
       document.body.removeChild(btn);
     });
 
-    it('restores focus to previously focused element after close', async () => {
+    it('returns focus to the trigger element', async () => {
       btn.focus();
       expect(document.activeElement).toBe(btn);
 

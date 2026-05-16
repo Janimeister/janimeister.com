@@ -229,6 +229,23 @@ describe('ThirdPartyNotices', () => {
     });
   });
 
+  it('uses replaceState (not pushState) when closing to avoid adding a history entry', async () => {
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+
+    const replaceStateSpy = jest.spyOn(history, 'replaceState');
+    const pushStateSpy = jest.spyOn(history, 'pushState');
+
+    fireEvent.click(screen.getByLabelText(/close third party notices/i));
+
+    expect(replaceStateSpy).toHaveBeenCalled();
+    expect(pushStateSpy).not.toHaveBeenCalled();
+
+    replaceStateSpy.mockRestore();
+    pushStateSpy.mockRestore();
+  });
+
   it('responds to hashchange event', async () => {
     render(<ThirdPartyNotices />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

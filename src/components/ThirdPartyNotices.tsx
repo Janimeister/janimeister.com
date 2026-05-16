@@ -135,11 +135,12 @@ function getFocusable(root: HTMLElement): HTMLElement[] {
 export default function ThirdPartyNotices(): ReactElement | null {
   const [visible, setVisible] = useState(() => window.location.hash === NOTICES_HASH);
   const [noticesHtml, setNoticesHtml] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const close = () => {
-    history.pushState(null, '', window.location.pathname + window.location.search);
+    history.replaceState(null, '', window.location.pathname + window.location.search);
     setVisible(false);
   };
 
@@ -202,12 +203,16 @@ export default function ThirdPartyNotices(): ReactElement | null {
 
   // Lazy-load the markdown only when the modal is first opened
   useEffect(() => {
-    if (visible && noticesHtml === null) {
-      import('../../THIRD_PARTY_NOTICES.md?raw').then((m: { default: string }) => {
-        setNoticesHtml(markdownToHtml(m.default));
-      });
+    if (visible && noticesHtml === null && !loadError) {
+      import('../../THIRD_PARTY_NOTICES.md?raw')
+        .then((m: { default: string }) => {
+          setNoticesHtml(markdownToHtml(m.default));
+        })
+        .catch(() => {
+          setLoadError(true);
+        });
     }
-  }, [visible, noticesHtml]);
+  }, [visible, noticesHtml, loadError]);
 
   // Lock body scroll when overlay is open
   useEffect(() => {
@@ -248,7 +253,13 @@ export default function ThirdPartyNotices(): ReactElement | null {
         </div>
 
         {/* Scrollable content */}
-        {noticesHtml === null ? (
+        {loadError ? (
+          <div className="flex flex-1 items-center justify-center">
+            <p className="font-display text-xs tracking-[0.25em] uppercase text-parchment-dim">
+              Failed to load notices. Please try again later.
+            </p>
+          </div>
+        ) : noticesHtml === null ? (
           <div className="flex flex-1 items-center justify-center">
             <p className="font-display text-xs tracking-[0.25em] uppercase text-parchment-dim animate-pulse">
               Loading…

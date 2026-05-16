@@ -37,15 +37,29 @@ describe('ThirdPartyNotices load error', () => {
       ).toBeInTheDocument(),
     );
 
-    // Clicking Retry calls setLoadError(false), resetting the guard and
-    // triggering another import attempt (which fails again in this test).
+    // Click Retry: calls setLoadError(false), which hides the error UI while the
+    // import is re-attempted. Verify the error disappears first (proving the state
+    // was cleared), then reappears (proving the import was re-attempted and failed).
     fireEvent.click(screen.getByRole('button', { name: /retry loading third-party notices/i }));
 
-    // The import fails again (mock still throws), so the error UI reappears.
+    // Intermediate state: error UI gone (loadError reset to false → loading state).
     await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: /retry loading third-party notices/i }),
-      ).toBeInTheDocument(),
+      expect(screen.queryByText(/failed to load notices/i)).not.toBeInTheDocument(),
     );
+
+    // Final state: import fails again, error reappears.
+    await waitFor(() =>
+      expect(screen.getByText(/failed to load notices/i)).toBeInTheDocument(),
+    );
+  });
+
+  it('shows a Reload page button alongside Retry for stale-chunk recovery', async () => {
+    render(<ThirdPartyNotices />);
+    await waitFor(() =>
+      expect(screen.queryByText(/failed to load notices/i)).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole('button', { name: /reload page to fix third-party notices/i }),
+    ).toBeInTheDocument();
   });
 });

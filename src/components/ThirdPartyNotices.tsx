@@ -257,16 +257,26 @@ export default function ThirdPartyNotices(): ReactElement | null {
         {loadError ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4">
             <p className="font-display text-xs tracking-[0.25em] uppercase text-parchment-dim">
-              Failed to load notices. Please try again.
+              Failed to load notices.
             </p>
-            <button
-              type="button"
-              onClick={() => setLoadError(false)}
-              aria-label="Retry loading third-party notices"
-              className="font-display text-xs tracking-[0.25em] uppercase text-gold-bright underline underline-offset-2 hover:text-gold"
-            >
-              Retry
-            </button>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setLoadError(false)}
+                aria-label="Retry loading third-party notices"
+                className="font-display text-xs tracking-[0.25em] uppercase text-gold-bright underline underline-offset-2 hover:text-gold"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                aria-label="Reload page to fix third-party notices"
+                className="font-display text-xs tracking-[0.25em] uppercase text-parchment-dim underline underline-offset-2 hover:text-parchment"
+              >
+                Reload page
+              </button>
+            </div>
           </div>
         ) : noticesHtml === null ? (
           <div className="flex flex-1 items-center justify-center">

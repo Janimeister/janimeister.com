@@ -1,12 +1,8 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Only deploy after the Tests workflow passes on main.
-  workflow_run:
-    workflows: ["Tests"]
-    types: [completed]
+  push:
     branches: [main]
-  # Allow manual runs and the daily refresh to bypass the test gate.
   workflow_dispatch:
   schedule:
     # Refresh the static videos.json daily so the page picks up new uploads
@@ -20,22 +16,38 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  NODE_VERSION: 22.9
+
 jobs:
+  tests:
+    name: Tests
+    uses: ./.github/workflows/test.yml
+    permissions:
+      contents: read
+
   build:
-    # For workflow_run events, only proceed if tests passed.
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    name: Build
+    needs: tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22.9
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - run: npm ci
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
       - name: Compute base path
         id: base
@@ -64,7 +76,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:

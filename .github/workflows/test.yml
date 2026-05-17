@@ -1,14 +1,13 @@
 name: Tests
 
 on:
-  push:
-    branches-ignore: [main]
   pull_request:
   workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}

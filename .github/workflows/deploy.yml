@@ -25,6 +25,7 @@ jobs:
     uses: ./.github/workflows/test.yml
     permissions:
       contents: read
+      actions: write
 
   build:
     name: Build

@@ -14,8 +14,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ inputs.called-from-deploy == true && 'deploy-tests' || format('tests-{0}', github.event.pull_request.number || github.ref) }}
-  cancel-in-progress: ${{ inputs.called-from-deploy != true }}
+  group: ${{ inputs['called-from-deploy'] == true && 'deploy-tests' || format('tests-{0}', github.event.pull_request.number || github.ref) }}
+  cancel-in-progress: ${{ inputs['called-from-deploy'] != true }}
 
 env:
   NODE_VERSION: 24

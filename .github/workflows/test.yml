@@ -3,14 +3,19 @@ name: Tests
 on:
   pull_request:
   workflow_call:
+    inputs:
+      called-from-deploy:
+        description: 'Set to true when invoked by the deploy workflow to avoid cancelling in-flight deploy gates'
+        type: boolean
+        default: false
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: tests-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ inputs.called-from-deploy == true && 'deploy-tests' || format('tests-{0}', github.event.pull_request.number || github.ref) }}
+  cancel-in-progress: ${{ inputs.called-from-deploy != true }}
 
 env:
   NODE_VERSION: 24
@@ -77,3 +82,4 @@ jobs:
           name: playwright-report
           path: playwright-report
           retention-days: 7
+          if-no-files-found: ignore

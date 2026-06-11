@@ -36,9 +36,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci
+      - run: corepack npm ci
       - name: Build (type check + vite build)
-        run: npm run build:ci
+        run: corepack npm run build:ci
 
   unit:
     name: Unit Tests
@@ -53,9 +53,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
+      - run: corepack npm ci
+      - run: corepack npm run lint
+      - run: corepack npm test
 
   e2e:
     name: E2E Tests
@@ -73,9 +73,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci
-      - run: npm run test:e2e:install
-      - run: npm run test:e2e
+      - run: corepack npm ci
+      - run: corepack npm run test:e2e:install
+      - run: corepack npm run test:e2e
       - if: failure()
         uses: actions/upload-artifact@v7
         with:

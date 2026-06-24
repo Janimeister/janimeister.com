@@ -6,7 +6,7 @@
   "engines": {
     "node": ">=22.9.0"
   },
-  "packageManager": "npm@11.16.0",
+  "packageManager": "npm@11.17.0",
   "description": "Personal site for the Janimeister YouTube channel — FromSoftware boss kills.",
   "scripts": {
     "prebuild": "node --env-file-if-exists .env scripts/fetch-videos.mjs",

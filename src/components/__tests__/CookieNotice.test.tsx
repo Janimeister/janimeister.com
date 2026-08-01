@@ -25,9 +25,9 @@ describe('CookieNotice', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the consent dialog when no prior consent', () => {
+  it('renders the consent notice when no prior consent', () => {
     render(<CookieNotice />);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /a note from the bonfire/i })).toBeInTheDocument();
     expect(screen.getByText(/a note from the bonfire/i)).toBeInTheDocument();
   });
 
@@ -45,7 +45,7 @@ describe('CookieNotice', () => {
 
     await user.click(acceptBtn);
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region')).not.toBeInTheDocument();
     expect(localStorageMock.setItem).toHaveBeenCalledWith(
       'janimeister.consent.v1',
       expect.stringContaining('"acknowledged":true')

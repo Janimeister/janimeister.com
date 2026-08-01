@@ -36,6 +36,8 @@ export default function VideoCard({ video, index }: Props): ReactElement {
       <div className="relative aspect-video overflow-hidden bg-ash-3">
         <img
           src={thumb}
+          srcSet={`https://i.ytimg.com/vi/${video.id}/mqdefault.jpg 320w, ${thumb} 480w`}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           alt=""
           width={480}
           height={360}
@@ -47,6 +49,8 @@ export default function VideoCard({ video, index }: Props): ReactElement {
             const img = e.currentTarget;
             if (!img.dataset.fallback) {
               img.dataset.fallback = '1';
+              img.removeAttribute('srcset');
+              img.removeAttribute('sizes');
               img.src = `https://i.ytimg.com/vi/${video.id}/0.jpg`;
             }
           }}

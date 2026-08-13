@@ -19,8 +19,8 @@ export default function CookieNotice(): ReactElement | null {
   };
 
   return (
-    <div
-      role="dialog"
+    <section
+      role="region"
       aria-live="polite"
       aria-labelledby="consent-title"
       className="fixed inset-x-2 bottom-2 z-40 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:max-w-md"
@@ -76,6 +76,6 @@ export default function CookieNotice(): ReactElement | null {
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -34,11 +34,11 @@ test.describe('Janimeister site', () => {
 
   test('cookie notice persists acknowledgement in localStorage', async ({ page }) => {
     await page.goto('/');
-    const dialog = page.getByRole('dialog', { name: /a note from the bonfire/i });
-    await expect(dialog).toBeVisible();
+    const notice = page.getByRole('region', { name: /a note from the bonfire/i });
+    await expect(notice).toBeVisible();
 
     await page.getByTestId('consent-accept').click();
-    await expect(dialog).toBeHidden();
+    await expect(notice).toBeHidden();
 
     const stored = await page.evaluate(() =>
       window.localStorage.getItem('janimeister.consent.v1'),
@@ -47,7 +47,7 @@ test.describe('Janimeister site', () => {
     expect(JSON.parse(stored!)).toMatchObject({ acknowledged: true });
 
     await page.reload();
-    await expect(page.getByRole('dialog', { name: /a note from the bonfire/i })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: /a note from the bonfire/i })).toHaveCount(0);
   });
 
   test('mobile menu opens', async ({ page, isMobile }) => {

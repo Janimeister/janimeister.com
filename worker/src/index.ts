@@ -111,7 +111,13 @@ export default {
         ? await fetchViaApi(channelId, env.YT_API_KEY)
         : await fetchViaRss(channelId);
     } catch (err) {
-      return json({ error: 'fetch_failed', message: String(err) }, 502, baseHeaders);
+      // Log the underlying error but never leak internal details to clients.
+      console.error('Feed fetch failed:', err);
+      return json(
+        { error: 'fetch_failed', message: 'Upstream feed unavailable' },
+        502,
+        baseHeaders,
+      );
     }
     const payload = {
       channelId,

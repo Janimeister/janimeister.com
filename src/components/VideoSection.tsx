@@ -30,11 +30,8 @@ export default function VideoSection({ channelPromise }: Props): ReactElement {
   }, [data.videos, deferredQuery, sort]);
 
   const fetchedAt = useMemo(() => {
-    try {
-      return new Date(data.fetchedAt).toLocaleString();
-    } catch {
-      return '—';
-    }
+    const date = new Date(data.fetchedAt);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
   }, [data.fetchedAt]);
 
   return (

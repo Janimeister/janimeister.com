@@ -14,13 +14,13 @@ test.describe('Accessibility', () => {
     expect(results.violations).toEqual([]);
   });
 
-  test('cookie notice dialog is accessible', async ({ page }) => {
+  test('cookie notice is accessible', async ({ page }) => {
     await page.goto('/');
-    const dialog = page.getByRole('dialog', { name: /a note from the bonfire/i });
-    await expect(dialog).toBeVisible();
+    const notice = page.getByRole('region', { name: /a note from the bonfire/i });
+    await expect(notice).toBeVisible();
 
-    // Dialog has proper labelling
-    await expect(dialog).toHaveAttribute('aria-labelledby', 'consent-title');
+    // Notice has proper labelling
+    await expect(notice).toHaveAttribute('aria-labelledby', 'consent-title');
 
     // Buttons are keyboard accessible
     const acceptBtn = page.getByTestId('consent-accept');

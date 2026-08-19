@@ -4,11 +4,47 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 10
     groups:
+      # React runtime + its type packages must move in lockstep: react-dom
+      # peer-depends on an exact-ish react version, and @types/react-dom
+      # depends on @types/react. Split across PRs, each one mismatches and
+      # every render fails. Listed first: a dependency joins the first
+      # group it matches, and the type packages are devDependencies.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      # Vite and its plugins gate on each other's major versions.
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "@tailwindcss/vite"
+          - "tailwindcss"
+      # Jest core, environment, transformer and types share a release train.
+      jest:
+        patterns:
+          - "jest"
+          - "jest-*"
+          - "ts-jest"
+          - "@types/jest"
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # ts-jest 29 declares `typescript@">=4.3 <7"`. Until a ts-jest release
+      # supports TypeScript 7, bumping TS to 7 makes `npm ci` fail with
+      # ERESOLVE. Drop this ignore once ts-jest widens the peer range.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"

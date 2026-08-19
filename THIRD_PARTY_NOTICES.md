@@ -8,7 +8,7 @@ Packages included: react, react-dom, @fontsource/cinzel, @fontsource/eb-garamond
 
 ## React
 
-**Version:** 19.2.6  
+**Version:** 19.2.8  
 **License:** MIT  
 **Copyright:** Copyright (c) Meta Platforms, Inc. and affiliates.  
 **Homepage:** https://react.dev  
@@ -45,7 +45,7 @@ SOFTWARE.
 
 ## react-dom
 
-**Version:** 19.2.6  
+**Version:** 19.2.8  
 **License:** MIT  
 **Copyright:** Copyright (c) Meta Platforms, Inc. and affiliates.  
 **Homepage:** https://react.dev  
@@ -56,7 +56,7 @@ SOFTWARE.
 
 ## Vite
 
-**Version:** 6.4.2  
+**Version:** 8.2.1  
 **License:** MIT  
 **Copyright:** Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors.  
 **Homepage:** https://vite.dev  
@@ -93,7 +93,7 @@ SOFTWARE.
 
 ## @vitejs/plugin-react
 
-**Version:** 4.7.0  
+**Version:** 6.0.5  
 **License:** MIT  
 **Copyright:** Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors.  
 **Homepage:** https://github.com/vitejs/vite-plugin-react  
@@ -104,7 +104,7 @@ SOFTWARE.
 
 ## Tailwind CSS
 
-**Version:** 4.3.0  
+**Version:** 4.3.3  
 **License:** MIT  
 **Copyright:** Copyright (c) Tailwind Labs, Inc.  
 **Homepage:** https://tailwindcss.com  
@@ -141,7 +141,7 @@ SOFTWARE.
 
 ## @tailwindcss/vite
 
-**Version:** 4.3.0  
+**Version:** 4.3.3  
 **License:** MIT  
 **Copyright:** Copyright (c) Tailwind Labs, Inc.  
 **Homepage:** https://github.com/tailwindlabs/tailwindcss/tree/next/packages/%40tailwindcss/vite  
@@ -424,7 +424,7 @@ SOFTWARE.
 
 ## ts-jest
 
-**Version:** 29.4.9  
+**Version:** 29.4.12  
 **License:** MIT  
 **Copyright:** Copyright (c) 2016-2018 Kulshekhar Kabra.  
 **Homepage:** https://kulshekhar.github.io/ts-jest  
@@ -498,7 +498,7 @@ SOFTWARE.
 
 ## @testing-library/jest-dom
 
-**Version:** 6.9.1  
+**Version:** 7.0.1  
 **License:** MIT  
 **Copyright:** Copyright (c) 2017 Kent C. Dodds.  
 **Homepage:** https://github.com/testing-library/jest-dom  
@@ -546,7 +546,7 @@ SOFTWARE.
 
 ## @testing-library/user-event
 
-**Version:** 14.6.1  
+**Version:** 14.6.4  
 **License:** MIT  
 **Copyright:** Copyright (c) 2020 Giorgio Polvara.  
 **Homepage:** https://github.com/testing-library/user-event  
@@ -583,7 +583,7 @@ SOFTWARE.
 
 ## @playwright/test
 
-**Version:** 1.59.1  
+**Version:** 1.62.1  
 **License:** Apache-2.0  
 **Copyright:** Copyright (c) Microsoft Corporation.  
 **Homepage:** https://playwright.dev  
@@ -598,7 +598,7 @@ SOFTWARE.
 
 ## @axe-core/playwright
 
-**Version:** 4.11.3  
+**Version:** 4.13.0  
 **License:** MPL-2.0  
 **Copyright:** Copyright (c) Deque Systems, Inc.  
 **Homepage:** https://github.com/dequelabs/axe-core-npm/tree/develop/packages/playwright  
@@ -976,7 +976,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 ## Wrangler
 
-**Version:** 4.90.0  
+**Version:** 4.123.0  
 **License:** MIT OR Apache-2.0  
 **Copyright:** Copyright (c) Cloudflare, Inc.  
 **Homepage:** https://github.com/cloudflare/workers-sdk  
@@ -1052,7 +1052,7 @@ SOFTWARE.
 
 ## @types/node
 
-**Version:** 22.19.18  
+**Version:** 26.2.0  
 **License:** MIT  
 **Copyright:** Copyright (c) Microsoft Corporation.  
 **Homepage:** https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node  
@@ -1063,7 +1063,7 @@ SOFTWARE.
 
 ## @types/react
 
-**Version:** 19.2.14  
+**Version:** 19.2.18  
 **License:** MIT  
 **Copyright:** Copyright (c) Microsoft Corporation.  
 **Homepage:** https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react  
@@ -1074,7 +1074,7 @@ SOFTWARE.
 
 ## @types/react-dom
 
-**Version:** 19.2.3  
+**Version:** 19.2.4  
 **License:** MIT  
 **Copyright:** Copyright (c) Microsoft Corporation.  
 **Homepage:** https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react-dom  

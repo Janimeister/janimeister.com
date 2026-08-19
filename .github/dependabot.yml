@@ -17,11 +17,15 @@ updates:
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
-      # Vite and its plugins gate on each other's major versions.
+      # Vite and its plugins gate on each other's major versions:
+      # @vitejs/plugin-react 6 peers vite ^8, while 4.x peers vite <=7.
+      # Named explicitly - the scoped wildcard "@vitejs/*" did not match,
+      # which left plugin-react behind when vite went 6 -> 8.
       vite:
         patterns:
           - "vite"
-          - "@vitejs/*"
+          - "@vitejs/plugin-react"
+          - "@vitejs*"
           - "@tailwindcss/vite"
           - "tailwindcss"
       # Jest core, environment, transformer and types share a release train.

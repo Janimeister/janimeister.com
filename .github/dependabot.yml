@@ -6,37 +6,12 @@ updates:
       interval: weekly
     open-pull-requests-limit: 10
     groups:
-      # React runtime + its type packages must move in lockstep: react-dom
-      # peer-depends on an exact-ish react version, and @types/react-dom
-      # depends on @types/react. Split across PRs, each one mismatches and
-      # every render fails. Listed first: a dependency joins the first
-      # group it matches, and the type packages are devDependencies.
-      react:
+      # All npm dependencies share one lockfile. Update runtime packages,
+      # types, and build/test tooling together to keep peer dependencies
+      # compatible and avoid competing version-update PRs on that lockfile.
+      npm-dependencies:
         patterns:
-          - "react"
-          - "react-dom"
-          - "@types/react"
-          - "@types/react-dom"
-      # Vite and its plugins gate on each other's major versions:
-      # @vitejs/plugin-react 6 peers vite ^8, while 4.x peers vite <=7.
-      # Named explicitly - the scoped wildcard "@vitejs/*" did not match,
-      # which left plugin-react behind when vite went 6 -> 8.
-      vite:
-        patterns:
-          - "vite"
-          - "@vitejs/plugin-react"
-          - "@vitejs*"
-          - "@tailwindcss/vite"
-          - "tailwindcss"
-      # Jest core, environment, transformer and types share a release train.
-      jest:
-        patterns:
-          - "jest"
-          - "jest-*"
-          - "ts-jest"
-          - "@types/jest"
-      dev-dependencies:
-        dependency-type: development
+          - "*"
     ignore:
       # ts-jest 29 declares `typescript@">=4.3 <7"`. Until a ts-jest release
       # supports TypeScript 7, bumping TS to 7 makes `npm ci` fail with

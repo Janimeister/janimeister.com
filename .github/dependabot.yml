@@ -6,18 +6,19 @@ updates:
       interval: weekly
     open-pull-requests-limit: 10
     groups:
-      # All npm dependencies share one lockfile. Update runtime packages,
-      # types, and build/test tooling together to keep peer dependencies
-      # compatible and avoid competing version-update PRs on that lockfile.
+      # Group routine updates to reduce competing changes to the shared
+      # lockfile. Review major upgrades separately, coordinating related
+      # packages when their peer dependencies require it.
       npm-dependencies:
         patterns:
           - "*"
+        update-types: ["minor", "patch"]
     ignore:
       # ts-jest 29 declares `typescript@">=4.3 <7"`. Until a ts-jest release
       # supports TypeScript 7, bumping TS to 7 makes `npm ci` fail with
       # ERESOLVE. Drop this ignore once ts-jest widens the peer range.
       - dependency-name: typescript
-        update-types: ["version-update:semver-major"]
+        versions: [">=7"]
 
   - package-ecosystem: github-actions
     directory: /

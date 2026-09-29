@@ -1,6 +1,9 @@
-import { defineConfig, type Plugin } from 'vite';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { buildCsp, renderNoscriptVideoList } from './shared/site-html.mjs';
 
 // Base path: when deployed to GitHub Pages on a project repo, set
 // `BASE_PATH=/<repo>/` in CI. Defaults to "/" for local dev / custom domains.
@@ -8,32 +11,21 @@ const base = process.env.BASE_PATH ?? '/';
 
 // Content Security Policy, injected into the built index.html only.
 // (Not applied in dev: @vitejs/plugin-react needs inline scripts there.)
-// - img-src allows data: (inline noise texture) and i.ytimg.com (thumbnails)
-// - style-src 'unsafe-inline' is required for React inline style attributes
-// - connect-src https: allows the optional live-feed Cloudflare Worker
-const CSP = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://i.ytimg.com",
-  "font-src 'self'",
-  "connect-src 'self' https:",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join('; ');
-
-function injectCsp(): Plugin {
+function injectCsp(liveApiUrl: string | undefined): Plugin {
+  const { csp, warning } = buildCsp(liveApiUrl);
   return {
     name: 'inject-csp',
     apply: 'build',
+    buildStart() {
+      if (warning) this.warn(warning);
+    },
     transformIndexHtml(html) {
       return {
         html,
         tags: [
           {
             tag: 'meta',
-            attrs: { 'http-equiv': 'Content-Security-Policy', content: CSP },
+            attrs: { 'http-equiv': 'Content-Security-Policy', content: csp },
             injectTo: 'head-prepend',
           },
         ],
@@ -42,14 +34,45 @@ function injectCsp(): Plugin {
   };
 }
 
-export default defineConfig({
-  base,
-  plugins: [react(), tailwindcss(), injectCsp()],
-  build: {
-    target: 'es2022',
-    sourcemap: true,
-  },
-  server: {
-    port: 5173,
-  },
+// Renders the build-time feed as a plain list inside <noscript>, so the
+// archive is readable without JavaScript and visible to non-rendering crawlers.
+// Skipped when public/videos.json doesn't exist (e.g. `build:ci`).
+function injectNoscriptVideos(): Plugin {
+  let publicDir = '';
+  return {
+    name: 'inject-noscript-videos',
+    apply: 'build',
+    configResolved(config) {
+      publicDir = config.publicDir;
+    },
+    transformIndexHtml(html) {
+      if (!publicDir) return html;
+      let data: unknown;
+      try {
+        data = JSON.parse(readFileSync(resolve(publicDir, 'videos.json'), 'utf8'));
+      } catch {
+        return html;
+      }
+      const noscript = renderNoscriptVideoList(data);
+      return noscript ? html.replace('<div id="root"></div>', `<div id="root"></div>\n${noscript}`) : html;
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  // loadEnv also picks up VITE_* variables from the shell (as set in CI).
+  const liveApiUrl = loadEnv(mode, process.cwd(), 'VITE_').VITE_VIDEO_API || undefined;
+
+  return {
+    base,
+    plugins: [react(), tailwindcss(), injectCsp(liveApiUrl), injectNoscriptVideos()],
+    build: {
+      target: 'es2022',
+      // Source maps aren't published; the source is on GitHub.
+      sourcemap: false,
+    },
+    server: {
+      port: 5173,
+    },
+  };
 });

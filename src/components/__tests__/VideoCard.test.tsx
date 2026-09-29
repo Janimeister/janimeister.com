@@ -53,6 +53,13 @@ describe('VideoCard', () => {
     expect(time!.textContent?.trim()).toBe(expected);
   });
 
+  it('shows "Date unknown" instead of "Invalid Date" for unparseable dates', () => {
+    const { container } = render(<VideoCard video={{ ...mockVideo, publishedAt: 'not-a-date' }} index={0} />);
+    expect(container.querySelector('time')).toBeNull();
+    expect(screen.getByText('Date unknown')).toBeInTheDocument();
+    expect(screen.queryByText(/invalid date/i)).not.toBeInTheDocument();
+  });
+
   it('has an accessible label including the video title', () => {
     render(<VideoCard video={mockVideo} index={0} />);
     const link = screen.getByRole('link');

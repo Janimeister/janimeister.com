@@ -29,7 +29,7 @@ test.describe('Accessibility', () => {
     await expect(acceptBtn).toBeFocused();
   });
 
-  test('skip link navigates to videos section', async ({ page }) => {
+  test('skip link moves focus to the main content', async ({ page }) => {
     // Pre-acknowledge the cookie notice so it does not interfere.
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -38,12 +38,30 @@ test.describe('Accessibility', () => {
       );
     });
     await page.goto('/');
-    const skipLink = page.getByRole('link', { name: /skip to videos/i });
+    const skipLink = page.getByRole('link', { name: /skip to main content/i });
     // Focus directly — Tab-based focus is unreliable on mobile browsers.
     await skipLink.focus();
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/#videos/);
+    await expect(page).toHaveURL(/#main$/);
+    await expect(page.locator('main#main')).toBeFocused();
+  });
+
+  test('page has exactly one h1, even with the notices dialog open', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('h1')).toHaveCount(1);
+
+    await page.goto('/#third-party-notices');
+    const dialog = page.getByRole('dialog', { name: /third party notices/i });
+    await expect(dialog.locator('.notices-content')).toBeVisible();
+    await expect(page.locator('h1')).toHaveCount(1);
+  });
+
+  test('search results are announced in a live region', async ({ page }) => {
+    await page.goto('/');
+    const search = page.getByPlaceholder(/seek a fallen foe/i);
+    await search.fill('Malenia');
+    await expect(page.locator('#videos p[role="status"]')).toHaveText(/^1 of \d+ entries match “Malenia”\.$/);
   });
 
   test('reduced-motion media query is respected', async ({ page }) => {
@@ -80,7 +98,8 @@ test.describe('Accessibility', () => {
 
     // Tab through and check we can reach key interactive elements
     const focusableSelectors = [
-      'a[href="#videos"]', // skip link or CTA
+      'a[href="#main"]', // skip link
+      'main a[href="#videos"]', // hero CTA
       'a[href="#home"]', // nav brand
     ];
     for (const selector of focusableSelectors) {

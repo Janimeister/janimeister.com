@@ -8,6 +8,12 @@ interface Props {
 
 type SortKey = 'newest' | 'oldest' | 'alpha';
 
+/** Timestamp for sorting; unparseable dates sort as the oldest entries. */
+function timeOf(iso: string): number {
+  const t = Date.parse(iso);
+  return Number.isNaN(t) ? 0 : t;
+}
+
 export default function VideoSection({ channelPromise }: Props): ReactElement {
   // React 19 `use` — suspends the parent until resolved.
   const data = use(channelPromise);
@@ -16,26 +22,39 @@ export default function VideoSection({ channelPromise }: Props): ReactElement {
   const [sort, setSort] = useState<SortKey>('newest');
   const deferredQuery = useDeferredValue(query);
 
+  const trimmedQuery = deferredQuery.trim();
+
   const filtered = useMemo(() => {
-    const q = deferredQuery.trim().toLowerCase();
-    let v = q
+    const q = trimmedQuery.toLowerCase();
+    const v = q
       ? data.videos.filter((video) => video.title.toLowerCase().includes(q))
       : data.videos.slice();
     v.sort((a, b) => {
       if (sort === 'alpha') return a.title.localeCompare(b.title);
-      const t = new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime();
+      const t = timeOf(a.publishedAt) - timeOf(b.publishedAt);
       return sort === 'newest' ? -t : t;
     });
     return v;
-  }, [data.videos, deferredQuery, sort]);
+  }, [data.videos, trimmedQuery, sort]);
 
   const fetchedAt = useMemo(() => {
     const date = new Date(data.fetchedAt);
     return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
   }, [data.fetchedAt]);
 
+  // Announced to screen readers as the result set changes. Kept mounted so
+  // updates are reliably picked up by assistive technology.
+  const resultsAnnouncement = !trimmedQuery
+    ? ''
+    : filtered.length === 0
+      ? `No entries match “${trimmedQuery}”.`
+      : `${filtered.length} of ${data.videos.length} entries match “${trimmedQuery}”.`;
+
   return (
     <div>
+      <p role="status" aria-live="polite" className="sr-only">
+        {resultsAnnouncement}
+      </p>
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
           <h2 className="heading-rune font-display text-3xl sm:text-4xl">
@@ -77,11 +96,12 @@ export default function VideoSection({ channelPromise }: Props): ReactElement {
       </div>
 
       {filtered.length === 0 ? (
-        <p
-          role="status"
-          className="frame-souls frame-souls-corners py-12 text-center font-serif italic text-parchment-dim"
-        >
-          No entries match &ldquo;{query}&rdquo;. The archives are silent.
+        <p className="frame-souls frame-souls-corners py-12 text-center font-serif italic text-parchment-dim">
+          {trimmedQuery ? (
+            <>No entries match &ldquo;{trimmedQuery}&rdquo;. The archives are silent.</>
+          ) : (
+            <>No chronicles yet. The archives are silent.</>
+          )}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

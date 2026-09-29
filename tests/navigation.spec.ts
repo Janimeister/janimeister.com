@@ -34,6 +34,22 @@ test.describe('Navigation', () => {
     await expect(page.locator('#mobile-menu')).toBeHidden();
   });
 
+  test('mobile menu closes on Escape and on outside tap', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'mobile-only assertion');
+    const menuButton = page.getByRole('button', { name: /toggle menu/i });
+
+    await menuButton.click();
+    await expect(page.locator('#mobile-menu')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#mobile-menu')).toBeHidden();
+    await expect(menuButton).toBeFocused();
+
+    await menuButton.click();
+    await expect(page.locator('#mobile-menu')).toBeVisible();
+    await page.locator('#about').click();
+    await expect(page.locator('#mobile-menu')).toBeHidden();
+  });
+
   test('nav becomes sticky with backdrop on scroll', async ({ page, isMobile }) => {
     test.skip(isMobile, 'desktop-only assertion');
     const header = page.locator('header');
@@ -87,7 +103,7 @@ test.describe('Navigation', () => {
     const noticesBody = dialog.locator('.notices-content');
     await expect(noticesBody).toBeVisible();
     // "React" is a known top-level section heading in THIRD_PARTY_NOTICES.md
-    await expect(noticesBody.locator('h2', { hasText: 'React' }).first()).toBeVisible();
+    await expect(noticesBody.locator('h4', { hasText: 'React' }).first()).toBeVisible();
 
     // Close the dialog
     await page.getByLabel(/close third party notices/i).click();

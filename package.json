@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": ">=22.9.0"
+    "node": ">=24"
   },
   "description": "Personal site for the Janimeister YouTube channel — FromSoftware boss kills.",
   "scripts": {
@@ -17,6 +17,7 @@
     "fetch:videos": "node --env-file-if-exists .env scripts/fetch-videos.mjs",
     "lint": "tsc -b --pretty",
     "test": "jest",
+    "test:node": "node --test \"shared/**/*.test.mjs\" \"worker/**/*.test.ts\"",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium",
     "worker:dev": "wrangler dev worker/src/index.ts",

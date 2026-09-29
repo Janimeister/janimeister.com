@@ -10,39 +10,21 @@
  *   YT_API_KEY  — YouTube Data API v3 key from Google Cloud Console
  */
 
+import { fetchViaApi, fetchViaRss } from '../../shared/youtube-feed.mjs';
+
 interface Env {
   CHANNEL_ID?: string;
   ALLOWED_ORIGIN?: string;
   YT_API_KEY?: string;
 }
 
-interface PlaylistItemsResponse {
-  items?: Array<{
-    snippet: {
-      publishedAt: string;
-      title: string;
-      description: string;
-      thumbnails?: { high?: { url: string } };
-      resourceId: { videoId: string };
-    };
-    contentDetails?: {
-      videoPublishedAt?: string;
-    };
-  }>;
-  nextPageToken?: string;
-}
-
-interface Video {
-  id: string;
-  title: string;
-  url: string;
-  thumbnail: string;
-  publishedAt: string;
-  description?: string;
-}
-
 const DEFAULT_CHANNEL = 'UCvCde3OAobvTuLdeiCpFDGw';
-const MAX_PAGES = 4; // up to 200 videos (50 per page)
+const USER_AGENT = 'janimeister-worker/1.0';
+
+// Only successful feed responses may be cached; errors must not be pinned in
+// browsers or intermediaries after the upstream recovers.
+const CACHE_OK = 'public, max-age=600, stale-while-revalidate=3600';
+const CACHE_NONE = 'no-store';
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -52,9 +34,7 @@ export default {
     const allowOrigin =
       allowed === '*' ? '*' : allowed.split(',').map((s) => s.trim()).includes(origin) ? origin : '';
 
-    const baseHeaders: Record<string, string> = {
-      'Cache-Control': 'public, max-age=600, stale-while-revalidate=3600',
-    };
+    const baseHeaders: Record<string, string> = {};
     if (allowed !== '*') {
       baseHeaders['Vary'] = 'Origin';
     }
@@ -75,11 +55,17 @@ export default {
     }
 
     if (req.method !== 'GET') {
-      return new Response('Method Not Allowed', { status: 405, headers: baseHeaders });
+      return new Response('Method Not Allowed', {
+        status: 405,
+        headers: { ...baseHeaders, 'Cache-Control': CACHE_NONE, Allow: 'GET, OPTIONS' },
+      });
     }
 
     if (url.pathname !== '/' && url.pathname !== '/videos' && url.pathname !== '/videos.json') {
-      return new Response('Not Found', { status: 404, headers: baseHeaders });
+      return new Response('Not Found', {
+        status: 404,
+        headers: { ...baseHeaders, 'Cache-Control': CACHE_NONE },
+      });
     }
 
     const channelId = env.CHANNEL_ID || DEFAULT_CHANNEL;
@@ -100,23 +86,27 @@ export default {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           ...baseHeaders,
+          'Cache-Control': CACHE_OK,
           'X-Cache': 'HIT',
         },
       });
     }
 
-    let videos: Video[];
+    let videos;
     try {
       videos = env.YT_API_KEY
-        ? await fetchViaApi(channelId, env.YT_API_KEY)
-        : await fetchViaRss(channelId);
+        ? await fetchViaApi(channelId, env.YT_API_KEY, { userAgent: USER_AGENT })
+        : await fetchViaRss(channelId, {
+            userAgent: USER_AGENT,
+            init: { cf: { cacheTtl: 600, cacheEverything: true } } as RequestInit,
+          });
     } catch (err) {
       // Log the underlying error but never leak internal details to clients.
       console.error('Feed fetch failed:', err);
       return json(
         { error: 'fetch_failed', message: 'Upstream feed unavailable' },
         502,
-        baseHeaders,
+        { ...baseHeaders, 'Cache-Control': CACHE_NONE },
       );
     }
     const payload = {
@@ -132,6 +122,7 @@ export default {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         ...baseHeaders,
+        'Cache-Control': CACHE_OK,
         'X-Cache': 'MISS',
       },
     });
@@ -145,103 +136,4 @@ function json(obj: unknown, status: number, headers: Record<string, string>): Re
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers },
   });
-}
-
-/** Fetch all uploads via YouTube Data API v3 (up to MAX_PAGES * 50 videos). */
-async function fetchViaApi(channelId: string, apiKey: string): Promise<Video[]> {
-  // The uploads playlist ID is the channel ID with "UC" replaced by "UU".
-  if (!channelId.startsWith('UC')) {
-    throw new Error(
-      `CHANNEL_ID must be a canonical YouTube channel ID starting with "UC" (got "${channelId}"). ` +
-        'Set it to the UC… ID found in the channel URL, not a handle or custom URL.',
-    );
-  }
-  const uploadsPlaylistId = 'UU' + channelId.slice(2);
-  const videos: Video[] = [];
-  let pageToken: string | undefined;
-
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const apiUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
-    apiUrl.searchParams.set('part', 'snippet,contentDetails');
-    apiUrl.searchParams.set('playlistId', uploadsPlaylistId);
-    apiUrl.searchParams.set('maxResults', '50');
-    apiUrl.searchParams.set('key', apiKey);
-    if (pageToken) apiUrl.searchParams.set('pageToken', pageToken);
-
-    const res = await fetch(apiUrl.toString(), {
-      headers: { 'user-agent': 'janimeister-worker/1.0' },
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) throw new Error(`YouTube API HTTP ${res.status}`);
-
-    const data = (await res.json()) as PlaylistItemsResponse;
-    for (const item of data.items ?? []) {
-      const { snippet, contentDetails } = item;
-      const videoId = snippet.resourceId.videoId;
-      videos.push({
-        id: videoId,
-        title: snippet.title.trim(),
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-        thumbnail: snippet.thumbnails?.high?.url ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-        publishedAt: contentDetails?.videoPublishedAt ?? snippet.publishedAt,
-        description: snippet.description ? snippet.description.trim().slice(0, 500) : undefined,
-      });
-    }
-
-    if (!data.nextPageToken) break;
-    pageToken = data.nextPageToken;
-  }
-
-  return videos;
-}
-
-/** Fallback: fetch the RSS feed (returns only the 15 most recent videos). */
-async function fetchViaRss(channelId: string): Promise<Video[]> {
-  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-  const res = await fetch(feedUrl, {
-    headers: { 'user-agent': 'janimeister-worker/1.0' },
-    signal: AbortSignal.timeout(15_000),
-    cf: { cacheTtl: 600, cacheEverything: true },
-  } as RequestInit);
-  if (!res.ok) throw new Error(`RSS feed HTTP ${res.status}`);
-  return parseFeed(await res.text());
-}
-
-function parseFeed(xml: string): Video[] {
-  const videos: Video[] = [];
-  const entryRe = /<entry>([\s\S]*?)<\/entry>/g;
-  let m: RegExpExecArray | null;
-  while ((m = entryRe.exec(xml))) {
-    const block = m[1];
-    const id = pick(block, /<yt:videoId>([^<]+)<\/yt:videoId>/);
-    const title = decode(pick(block, /<title>([\s\S]*?)<\/title>/));
-    const publishedAt = pick(block, /<published>([^<]+)<\/published>/);
-    const link = pick(block, /<link rel="alternate" href="([^"]+)"/);
-    const description = decode(pick(block, /<media:description>([\s\S]*?)<\/media:description>/));
-    if (!id || !title) continue;
-    videos.push({
-      id,
-      title: title.trim(),
-      url: link || `https://www.youtube.com/watch?v=${id}`,
-      thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-      publishedAt: publishedAt || new Date().toISOString(),
-      description: description ? description.trim().slice(0, 500) : undefined,
-    });
-  }
-  return videos;
-}
-
-function pick(s: string, re: RegExp): string {
-  const m = re.exec(s);
-  return m ? m[1] : '';
-}
-
-function decode(s: string): string {
-  return s
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
 }

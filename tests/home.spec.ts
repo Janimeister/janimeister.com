@@ -27,7 +27,7 @@ test.describe('Janimeister site', () => {
     await page.goto('/');
     const search = page.getByPlaceholder(/seek a fallen foe/i);
     await search.fill('zzzznotreallyaboss');
-    await expect(page.getByText(/no entries match/i)).toBeVisible();
+    await expect(page.getByText(/archives are silent/i)).toBeVisible();
     await search.fill('');
     await expect(page.locator('a[aria-label^="Watch on YouTube:"]').first()).toBeVisible();
   });

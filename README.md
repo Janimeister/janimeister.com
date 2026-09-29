@@ -129,10 +129,10 @@ The `Tests` workflow (`.github/workflows/test.yml`) runs three parallel jobs:
 | Job | What it does |
 |-----|-------------|
 | **build** | Type check (`tsc`) + Vite build (skips live YouTube fetch via `build:ci`) |
-| **unit** | Type check (`npm run lint`, which runs `tsc`) + Jest unit tests |
+| **unit** | Jest unit tests (type checking is handled by the build job) |
 | **e2e** | Playwright browser tests on Chromium (uses checked-in fixture data via `build:e2e`) |
 
-Failed e2e runs upload the Playwright HTML report as an artifact for debugging.
+CI uses Node.js 24 and installs the exact npm version declared in `package.json` (`npm@11.19.0`). Actions are pinned to reviewed commit SHAs and updated through Dependabot. Playwright rejects focused (`test.only`) tests in CI and uploads HTML reports for every completed, non-cancelled run, including successful retries.
 
 ## Privacy
 

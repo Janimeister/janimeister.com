@@ -42,7 +42,7 @@ test.describe('Video section', () => {
 
     // Search for something that won't match
     await search.fill('xyznonexistent123');
-    await expect(page.getByText(/no entries match/i)).toBeVisible();
+    await expect(page.getByText(/archives are silent/i)).toBeVisible();
 
     // Clear search restores all videos
     await search.fill('');

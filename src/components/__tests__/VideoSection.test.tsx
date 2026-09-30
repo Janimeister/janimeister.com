@@ -80,7 +80,47 @@ describe('VideoSection', () => {
     const searchInput = screen.getByPlaceholderText(/seek a fallen foe/i);
     await user.type(searchInput, 'Nonexistent Boss');
 
-    expect(screen.getByRole('status')).toHaveTextContent(/archives are silent/i);
+    expect(screen.getByText(/no entries match “nonexistent boss”\. the archives are silent/i)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('No entries match “Nonexistent Boss”.');
+  });
+
+  it('announces the number of matching entries to screen readers', async () => {
+    await renderVideoSection();
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('');
+
+    await user.type(screen.getByPlaceholderText(/seek a fallen foe/i), 'of the');
+    expect(status).toHaveTextContent('2 of 3 entries match “of the”.');
+  });
+
+  it('ignores surrounding whitespace in the search query', async () => {
+    await renderVideoSection();
+    await user.type(screen.getByPlaceholderText(/seek a fallen foe/i), '  gwyn  ');
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 3 entries match “gwyn”.');
+  });
+
+  it('shows an empty-archive message when the feed has no videos', async () => {
+    await renderVideoSection({ ...mockData, videos: [] });
+    expect(screen.getByText(/no chronicles yet/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no entries match/i)).not.toBeInTheDocument();
+  });
+
+  it('sorts videos with unparseable dates as the oldest', async () => {
+    const withBadDate = {
+      ...mockData,
+      videos: [{ ...mockData.videos[0], id: 'bad', title: 'Undated Boss', publishedAt: 'garbage' }, ...mockData.videos],
+    };
+    await renderVideoSection(withBadDate);
+
+    let items = screen.getAllByRole('listitem');
+    expect(items[items.length - 1]).toHaveTextContent('Undated Boss');
+    expect(items[0]).toHaveTextContent('Radahn General of the Stars');
+
+    await user.selectOptions(screen.getByDisplayValue('Newest first'), 'oldest');
+    items = screen.getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Undated Boss');
+    expect(items[1]).toHaveTextContent('Gwyn Lord of Cinder');
   });
 
   it('sorts videos by oldest first', async () => {

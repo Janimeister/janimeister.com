@@ -67,6 +67,8 @@ jobs:
 
       - run: npm ci
       - run: npm test
+      - name: Node tests (shared build helpers + Worker)
+        run: npm run test:node
 
   e2e:
     name: E2E Tests

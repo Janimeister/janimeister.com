@@ -15,7 +15,7 @@ Live site: [janimeister.com](https://janimeister.com).
 
 ## Prerequisites
 
-- **Node.js 24** and npm, matching the GitHub Actions workflows. Use this version for the current toolchain rather than relying on the older minimum in `package.json`.
+- **Node.js 24** and npm, matching the GitHub Actions workflows and the `engines` field in `package.json`.
 
 ## Local development
 
@@ -67,7 +67,9 @@ npx wrangler secret put YT_API_KEY --config worker/wrangler.toml
 
 Then expose the deployed URL as a GitHub Actions repository **variable** named
 `VITE_VIDEO_API` (e.g. `https://janimeister-feed.<account>.workers.dev`). The
-browser first reads the static `videos.json`, then attempts the Worker request before displaying the resolved feed. It uses the static data if the Worker fails or returns no videos. The Worker can use the Data API or RSS and caches responses at the edge for ten minutes.
+browser requests the static `videos.json` and the Worker in parallel and prefers the Worker's data. It uses the static data if the Worker fails or returns no videos, and the Worker's data if the static file fails. If neither loads, the video section shows a retry button and a link to the channel while the rest of the page stays usable. The Worker can use the Data API or RSS and caches successful responses at the edge for ten minutes; error responses are sent with `Cache-Control: no-store`.
+
+The build adds the Worker's origin to the page's Content Security Policy (`connect-src`), so the site can only connect to itself and that origin.
 
 For local use, set `VITE_VIDEO_API` in `.env` and allow `http://localhost:5173` in the Worker's comma-separated `ALLOWED_ORIGIN` list. `VITE_VIDEO_API` is a public URL bundled into the client; keep `YT_API_KEY` in the build environment or Worker secret.
 
@@ -81,15 +83,15 @@ Configure GitHub Pages to use **GitHub Actions** as its source, then push to `ma
 The workflow:
 
 1. Runs the reusable test workflow and waits for all three jobs to pass.
-2. Computes the base path from the presence of `CNAME` or `public/CNAME` (currently `/` for the custom domain).
-3. Fetches videos and builds the production site.
+2. Computes the base path from the presence of `public/CNAME` (currently `/` for the custom domain).
+3. Fetches videos and builds the production site. The build also renders the video list into a `<noscript>` block, so it can be read without JavaScript.
 4. Adds a `404.html` fallback, then uploads `dist/` and deploys it to Pages.
 
 The workflow also runs daily at 05:17 UTC so new uploads appear without a commit. It does not deploy the optional Worker.
 
 ## Tests
 
-The project uses two layers of testing. CI runs on pull requests and manual dispatch, and the deployment workflow calls the same tests for pushes to `main` and scheduled deployments.
+The project uses three layers of testing. CI runs on pull requests and manual dispatch, and the deployment workflow calls the same tests for pushes to `main` and scheduled deployments.
 
 ### Unit tests (Jest + Testing Library)
 
@@ -100,8 +102,16 @@ npm test              # run all unit tests
 npm test -- --watch  # watch mode during development
 ```
 
-Tests live alongside their components in `src/components/__tests__/` and
-`src/hooks/__tests__/`.
+Tests live alongside their code in `src/components/__tests__/`,
+`src/hooks/__tests__/` and `src/api/__tests__/`.
+
+### Node tests (shared build helpers + Worker)
+
+The YouTube feed fetching and parsing code in `shared/` is used by both the build script and the Worker. It is tested together with the Worker and the build-time HTML helpers using Node's built-in test runner (the Worker's TypeScript runs through Node's type stripping):
+
+```bash
+npm run test:node
+```
 
 ### End-to-end tests (Playwright)
 
@@ -121,6 +131,7 @@ viewports. The suite includes:
 - **navigation.spec.ts** — nav links, sticky header, footer, external link safety, third-party notices dialog
 - **videos.spec.ts** — video card structure, sorting, filtering, lazy loading
 - **visual.spec.ts** — error-free load, meta tags, responsive layout, fonts
+- **resilience.spec.ts** — feed failure fallback and retry, invalid dates, `<noscript>` fallback, CSP
 
 ### CI workflow
 
@@ -129,7 +140,7 @@ The `Tests` workflow (`.github/workflows/test.yml`) runs three parallel jobs:
 | Job | What it does |
 |-----|-------------|
 | **build** | Type check (`tsc`) + Vite build (skips live YouTube fetch via `build:ci`) |
-| **unit** | Jest unit tests (type checking is handled by the build job) |
+| **unit** | Jest unit tests and Node tests for `shared/` and the Worker (type checking is handled by the build job) |
 | **e2e** | Playwright browser tests on Chromium (uses checked-in fixture data via `build:e2e`) |
 
 CI uses Node.js 24 and installs the exact npm version declared in `package.json` (`npm@11.19.0`). Actions are pinned to reviewed commit SHAs and updated through Dependabot. Playwright rejects focused (`test.only`) tests in CI and uploads HTML reports for every completed, non-cancelled run, including successful retries.

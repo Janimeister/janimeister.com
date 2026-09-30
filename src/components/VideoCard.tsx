@@ -6,16 +6,15 @@ interface Props {
   index: number;
 }
 
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
+function formatDate(iso: string): string | null {
+  const date = new Date(iso);
+  // Invalid dates don't throw; they format as "Invalid Date".
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  });
 }
 
 export default function VideoCard({ video, index }: Props): ReactElement {
@@ -24,6 +23,7 @@ export default function VideoCard({ video, index }: Props): ReactElement {
   const thumb = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
   // Prefer eager-loading the first 3 tiles for LCP.
   const eager = index < 3;
+  const published = formatDate(video.publishedAt);
 
   return (
     <a
@@ -82,7 +82,11 @@ export default function VideoCard({ video, index }: Props): ReactElement {
           {video.title}
         </h3>
         <p className="mt-3 flex items-center justify-between text-xs text-parchment-dim">
-          <time dateTime={video.publishedAt}>{formatDate(video.publishedAt)}</time>
+          {published ? (
+            <time dateTime={video.publishedAt}>{published}</time>
+          ) : (
+            <span>Date unknown</span>
+          )}
           <span className="font-display tracking-[0.25em] uppercase text-gold/70">
             Watch ▸
           </span>

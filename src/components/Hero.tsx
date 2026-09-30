@@ -4,7 +4,7 @@ export default function Hero(): ReactElement {
   return (
     <section
       id="home"
-      className="relative isolate flex min-h-[92vh] items-center justify-center px-4 pt-24 pb-12"
+      className="relative isolate flex min-h-[92svh] items-center justify-center px-4 pt-24 pb-12"
     >
       {/* Sigil glow */}
       <div

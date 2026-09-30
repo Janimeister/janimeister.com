@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
-/** Minimal Markdown-to-HTML converter for our THIRD_PARTY_NOTICES.md structure. */
-export function markdownToHtml(md: string): string {
+/**
+ * Minimal Markdown-to-HTML converter for our THIRD_PARTY_NOTICES.md structure.
+ * `headingOffset` demotes headings (e.g. 1 renders `#` as `<h2>`), capped at h6.
+ */
+export function markdownToHtml(md: string, { headingOffset = 0 }: { headingOffset?: number } = {}): string {
   const lines = md.split('\n');
   const html: string[] = [];
   let inCode = false;
@@ -101,7 +104,7 @@ export function markdownToHtml(md: string): string {
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
     if (headingMatch) {
       closeParagraph();
-      const level = headingMatch[1].length;
+      const level = Math.min(headingMatch[1].length + headingOffset, 6);
       html.push(`<h${level}>${inlineMarkdown(headingMatch[2])}</h${level}>`);
       continue;
     }
@@ -215,7 +218,8 @@ export default function ThirdPartyNotices(): ReactElement | null {
     if (visible && noticesHtml === null && !loadError) {
       import('../../THIRD_PARTY_NOTICES.md?raw')
         .then((m: { default: string }) => {
-          setNoticesHtml(markdownToHtml(m.default));
+          // The dialog title is the h2, so the document's headings start at h3.
+          setNoticesHtml(markdownToHtml(m.default, { headingOffset: 2 }));
         })
         .catch(() => {
           setLoadError(true);
@@ -242,13 +246,15 @@ export default function ThirdPartyNotices(): ReactElement | null {
       className="fixed inset-0 z-50 flex items-start justify-center bg-ash/95 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-label="Third Party Notices"
+      aria-labelledby="third-party-notices-title"
       tabIndex={-1}
     >
       <div className="relative mx-auto mt-4 mb-4 flex h-[calc(100vh-2rem)] w-full max-w-4xl flex-col rounded-sm border border-gold/30 bg-ash-2/95 shadow-[0_0_60px_rgba(0,0,0,0.8)]">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-gold/20 px-6 py-4">
-          <h1 className="heading-rune font-display text-lg sm:text-xl">Third Party Notices</h1>
+          <h2 id="third-party-notices-title" className="heading-rune font-display text-lg sm:text-xl">
+            Third Party Notices
+          </h2>
           <button
             type="button"
             onClick={close}

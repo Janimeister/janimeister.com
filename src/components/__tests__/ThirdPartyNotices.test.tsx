@@ -8,6 +8,12 @@ describe('markdownToHtml', () => {
     expect(markdownToHtml('### Sub')).toContain('<h3>Sub</h3>');
   });
 
+  it('demotes headings by headingOffset, capped at h6', () => {
+    expect(markdownToHtml('# Title', { headingOffset: 2 })).toContain('<h3>Title</h3>');
+    expect(markdownToHtml('## Section', { headingOffset: 2 })).toContain('<h4>Section</h4>');
+    expect(markdownToHtml('###### Deep', { headingOffset: 2 })).toContain('<h6>Deep</h6>');
+  });
+
   it('converts bold text', () => {
     expect(markdownToHtml('**bold**')).toContain('<strong>bold</strong>');
   });
@@ -130,6 +136,16 @@ describe('ThirdPartyNotices', () => {
     expect(screen.getByRole('dialog', { name: /third party notices/i })).toBeInTheDocument();
     // Wait for async content load to settle
     await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
+  });
+
+  it('labels the dialog with an h2 and renders notices below it, without adding an h1', async () => {
+    window.location.hash = NOTICES_HASH;
+    render(<ThirdPartyNotices />);
+    const title = screen.getByRole('heading', { level: 2, name: /third party notices/i });
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-labelledby', title.id);
+    // The mocked notices start with "## React", rendered two levels lower.
+    expect(await screen.findByRole('heading', { level: 4, name: 'React' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
   });
 
   it('closes when close button is clicked', async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 const links = [
   { href: '#home', label: 'Bonfire' },
@@ -9,6 +9,8 @@ const links = [
 export default function Nav(): ReactElement {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -17,8 +19,29 @@ export default function Nav(): ReactElement {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Close the mobile menu on Escape (returning focus to the toggle) or on a
+  // pointer press anywhere outside the header.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      toggleRef.current?.focus();
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      if (!headerRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [open]);
+
   return (
     <header
+      ref={headerRef}
       className={[
         'fixed inset-x-0 top-0 z-30 transition-all duration-500',
         scrolled
@@ -61,6 +84,7 @@ export default function Nav(): ReactElement {
         </ul>
 
         <button
+          ref={toggleRef}
           type="button"
           className="md:hidden text-gold-bright p-2"
           aria-label="Toggle menu"

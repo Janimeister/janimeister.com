@@ -62,7 +62,7 @@ jobs:
         id: base
         run: |
           repo="${GITHUB_REPOSITORY##*/}"
-          if [ -f "CNAME" ] || [ -f "public/CNAME" ]; then
+          if [ -f "public/CNAME" ]; then
             echo "base=/" >> "$GITHUB_OUTPUT"
           else
             echo "base=/$repo/" >> "$GITHUB_OUTPUT"

@@ -143,7 +143,7 @@ The `Tests` workflow (`.github/workflows/test.yml`) runs three parallel jobs:
 | **unit** | Jest unit tests and Node tests for `shared/` and the Worker (type checking is handled by the build job) |
 | **e2e** | Playwright browser tests on Chromium (uses checked-in fixture data via `build:e2e`) |
 
-CI uses Node.js 24 and installs the exact npm version declared in `package.json` (`npm@12.2.0`). Actions are pinned to reviewed commit SHAs and updated through Dependabot. Playwright rejects focused (`test.only`) tests in CI and uploads HTML reports for every completed, non-cancelled run, including successful retries.
+CI uses Node.js 24 and installs the exact npm version declared in `package.json` (`npm@12.2.1`). Actions are pinned to reviewed commit SHAs and updated through Dependabot. Playwright rejects focused (`test.only`) tests in CI and uploads HTML reports for every completed, non-cancelled run, including successful retries.
 
 ## Privacy
 

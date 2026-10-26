@@ -15,7 +15,7 @@ Live site: [janimeister.com](https://janimeister.com).
 
 ## Prerequisites
 
-- **Node.js 24** and npm, matching the GitHub Actions workflows and the `engines` field in `package.json`.
+- **Node.js 26** and npm, matching the GitHub Actions workflows and the `engines` field in `package.json`.
 
 ## Local development
 
@@ -141,9 +141,9 @@ The `Tests` workflow (`.github/workflows/test.yml`) runs three parallel jobs:
 |-----|-------------|
 | **build** | Type check (`tsc`) + Vite build (skips live YouTube fetch via `build:ci`) |
 | **unit** | Jest unit tests and Node tests for `shared/` and the Worker (type checking is handled by the build job) |
-| **e2e** | Playwright browser tests on Chromium (uses checked-in fixture data via `build:e2e`) |
+| **e2e** | Playwright browser tests on Chromium (uses checked-in fixture data via `build:e2e`), run in the official Playwright container image matching the locked Playwright version |
 
-CI uses Node.js 24 and installs the exact npm version declared in `package.json` (`npm@12.2.1`). Actions are pinned to reviewed commit SHAs and updated through Dependabot. Playwright rejects focused (`test.only`) tests in CI and uploads HTML reports for every completed, non-cancelled run, including successful retries.
+CI uses Node.js 26 and installs the exact npm version declared in `package.json` (`npm@12.2.1`). Actions are pinned to reviewed commit SHAs and updated through Dependabot. Playwright rejects focused (`test.only`) tests in CI and uploads HTML reports for every completed, non-cancelled run, including successful retries.
 
 ## Privacy
 

@@ -5,11 +5,11 @@ test.describe('Video section', () => {
     await page.goto('/');
     await page.getByTestId('consent-accept').click();
     // Wait for videos to load
-    await page.locator('a[aria-label^="Watch on YouTube:"]').first().waitFor({ timeout: 15_000 });
+    await page.locator('[data-testid="video-card"]').first().waitFor({ timeout: 15_000 });
   });
 
   test('displays video cards with correct structure', async ({ page }) => {
-    const cards = page.locator('a[aria-label^="Watch on YouTube:"]');
+    const cards = page.locator('[data-testid="video-card"]');
     const count = await cards.count();
     expect(count).toBeGreaterThan(0);
 
@@ -26,7 +26,7 @@ test.describe('Video section', () => {
   });
 
   test('video cards link to YouTube', async ({ page }) => {
-    const cards = page.locator('a[aria-label^="Watch on YouTube:"]');
+    const cards = page.locator('[data-testid="video-card"]');
     const count = await cards.count();
 
     for (let i = 0; i < Math.min(count, 3); i++) {
@@ -37,7 +37,7 @@ test.describe('Video section', () => {
 
   test('search filters videos correctly', async ({ page }) => {
     const search = page.getByPlaceholder(/seek a fallen foe/i);
-    const cards = page.locator('a[aria-label^="Watch on YouTube:"]');
+    const cards = page.locator('[data-testid="video-card"]');
     const initialCount = await cards.count();
 
     // Search for something that won't match
@@ -51,7 +51,7 @@ test.describe('Video section', () => {
   });
 
   test('sort dropdown changes video order', async ({ page }) => {
-    const cards = page.locator('a[aria-label^="Watch on YouTube:"]');
+    const cards = page.locator('[data-testid="video-card"]');
     const sortSelect = page.locator('select');
 
     // Get first video title with default sort (newest)
@@ -76,7 +76,7 @@ test.describe('Video section', () => {
   });
 
   test('each video card shows a publish date', async ({ page }) => {
-    const cards = page.locator('a[aria-label^="Watch on YouTube:"]');
+    const cards = page.locator('[data-testid="video-card"]');
     const count = await cards.count();
 
     for (let i = 0; i < Math.min(count, 3); i++) {

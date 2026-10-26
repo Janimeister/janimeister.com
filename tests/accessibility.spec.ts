@@ -5,7 +5,7 @@ test.describe('Accessibility', () => {
   test('homepage has no critical accessibility violations', async ({ page }) => {
     await page.goto('/');
     // Wait for video cards to load so we audit the full page
-    await page.locator('a[aria-label^="Watch on YouTube:"]').first().waitFor({ timeout: 15_000 });
+    await page.locator('[data-testid="video-card"]').first().waitFor({ timeout: 15_000 });
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -79,7 +79,7 @@ test.describe('Accessibility', () => {
 
   test('images have appropriate alt text or are decorative', async ({ page }) => {
     await page.goto('/');
-    await page.locator('a[aria-label^="Watch on YouTube:"]').first().waitFor({ timeout: 15_000 });
+    await page.locator('[data-testid="video-card"]').first().waitFor({ timeout: 15_000 });
 
     const images = page.locator('img');
     const count = await images.count();

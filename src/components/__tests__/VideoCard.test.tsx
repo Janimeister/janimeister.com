@@ -60,9 +60,11 @@ describe('VideoCard', () => {
     expect(screen.queryByText(/invalid date/i)).not.toBeInTheDocument();
   });
 
-  it('has an accessible label including the video title', () => {
+  it('has an accessible name from its visible text, ending with "Watch on YouTube"', () => {
     render(<VideoCard video={mockVideo} index={0} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('aria-label', `Watch on YouTube: ${mockVideo.title}`);
+    // No aria-label: WCAG 2.5.3 (Label in Name) wants the name to contain the visible text.
+    expect(link).not.toHaveAttribute('aria-label');
+    expect(link).toHaveAccessibleName(new RegExp(`^${mockVideo.title}.*Watch on YouTube$`));
   });
 });

@@ -6,14 +6,14 @@ test.describe('Visual and responsive', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     await page.goto('/');
-    await page.locator('a[aria-label^="Watch on YouTube:"]').first().waitFor({ timeout: 15_000 });
+    await page.locator('[data-testid="video-card"]').first().waitFor({ timeout: 15_000 });
 
     expect(errors).toEqual([]);
   });
 
   test('no broken images on the page', async ({ page }) => {
     await page.goto('/');
-    await page.locator('a[aria-label^="Watch on YouTube:"]').first().waitFor({ timeout: 15_000 });
+    await page.locator('[data-testid="video-card"]').first().waitFor({ timeout: 15_000 });
 
     const brokenImages = await page.evaluate(() => {
       const images = document.querySelectorAll('img');
@@ -50,7 +50,7 @@ test.describe('Visual and responsive', () => {
     test.skip(!isMobile, 'mobile-only assertion');
     await page.goto('/');
     await page.getByTestId('consent-accept').click();
-    await page.locator('a[aria-label^="Watch on YouTube:"]').first().waitFor({ timeout: 15_000 });
+    await page.locator('[data-testid="video-card"]').first().waitFor({ timeout: 15_000 });
 
     // On mobile, video grid should be single column
     const grid = page.locator('ul.grid');

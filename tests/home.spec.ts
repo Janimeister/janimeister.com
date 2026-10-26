@@ -14,7 +14,7 @@ test.describe('Janimeister site', () => {
     await expect(cta).toBeVisible();
 
     // At least one video card appears
-    const videoCards = page.locator('a[aria-label^="Watch on YouTube:"]');
+    const videoCards = page.locator('[data-testid="video-card"]');
     await expect(videoCards.first()).toBeVisible({ timeout: 15_000 });
     expect(await videoCards.count()).toBeGreaterThan(0);
 
@@ -29,7 +29,7 @@ test.describe('Janimeister site', () => {
     await search.fill('zzzznotreallyaboss');
     await expect(page.getByText(/archives are silent/i)).toBeVisible();
     await search.fill('');
-    await expect(page.locator('a[aria-label^="Watch on YouTube:"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="video-card"]').first()).toBeVisible();
   });
 
   test('cookie notice persists acknowledgement in localStorage', async ({ page }) => {

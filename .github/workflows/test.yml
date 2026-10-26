@@ -70,8 +70,8 @@ jobs:
       - name: Node tests (shared build helpers + Worker)
         run: npm run test:node
 
-  # The E2E job runs in the official Playwright image, which ships the browsers
-  # and their system libraries, so it never waits on the runner's apt mirror.
+  # The E2E jobs run in the official Playwright image, which ships the browsers
+  # and their system libraries, so they never wait on the runner's apt mirror.
   # Its tag must match the locked Playwright version, so read it from the
   # lockfile and Dependabot bumps carry the image along.
   playwright-image:
@@ -95,9 +95,21 @@ jobs:
           fi
           echo "image=mcr.microsoft.com/playwright:v$version-noble" >> "$GITHUB_OUTPUT"
 
-  e2e:
-    name: E2E Tests
+  # One job per browser, run in parallel. Each lists the Playwright projects
+  # (playwright.config.ts) that use its browser.
+  e2e-browsers:
+    name: E2E Tests (${{ matrix.browser }})
     needs: playwright-image
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            projects: --project=chromium-desktop --project=mobile-chrome
+          - browser: firefox
+            projects: --project=firefox-desktop
+          - browser: webkit
+            projects: --project=webkit-desktop --project=mobile-safari
     runs-on: ubuntu-latest
     container:
       image: ${{ needs.playwright-image.outputs.image }}
@@ -123,11 +135,23 @@ jobs:
           npm --version
 
       - run: npm ci
-      - run: npm run test:e2e
+      - run: npm run test:e2e -- ${{ matrix.projects }}
       - if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.browser }}
           path: playwright-report
           retention-days: 7
           if-no-files-found: ignore
+
+  e2e:
+    name: E2E Tests
+    needs: e2e-browsers
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every browser to pass
+        env:
+          BROWSER_RESULT: ${{ needs.e2e-browsers.result }}
+        run: test "$BROWSER_RESULT" = success

@@ -19,7 +19,7 @@
     "test": "jest",
     "test:node": "node --test \"shared/**/*.test.mjs\" \"worker/**/*.test.ts\"",
     "test:e2e": "playwright test",
-    "test:e2e:install": "playwright install --with-deps chromium",
+    "test:e2e:install": "playwright install --with-deps chromium firefox webkit",
     "worker:dev": "wrangler dev worker/src/index.ts",
     "worker:deploy": "wrangler deploy"
   },

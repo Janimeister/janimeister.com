@@ -10,7 +10,7 @@ Live site: [janimeister.com](https://janimeister.com).
 - ⚡ Vite 8 and TypeScript 6, deployed to GitHub Pages via Actions
 - ☁️ Optional Cloudflare Worker for a live YouTube API/RSS feed with edge caching
 - 🍪 First-party cookie/localStorage notice (one key, no tracking)
-- 🧪 Playwright e2e tests (desktop + mobile)
+- 🧪 Playwright e2e tests in Chromium, Firefox, and WebKit (desktop + mobile)
 - ♿ Accessible: skip-link, ARIA labels, reduced-motion support, semantic landmarks
 
 ## Prerequisites
@@ -123,8 +123,10 @@ npm run test:e2e:install   # one-time browser download
 npm run test:e2e           # run all e2e tests (builds the site first)
 ```
 
-E2E tests are in `tests/` and run against both Chromium desktop and mobile Chrome
-viewports. The suite includes:
+E2E tests are in `tests/` and run in Chromium, Firefox, and WebKit: desktop
+viewports in all three, plus mobile Chrome (Pixel 7) and mobile Safari (iPhone 15).
+Firefox has no mobile emulation. Run one browser with, for example,
+`npm run test:e2e -- --project=firefox-desktop`. The suite includes:
 
 - **home.spec.ts** — core page rendering, search, cookie consent, mobile menu
 - **accessibility.spec.ts** — axe-core WCAG audit, skip link, keyboard focus, reduced motion
@@ -135,13 +137,13 @@ viewports. The suite includes:
 
 ### CI workflow
 
-The `Tests` workflow (`.github/workflows/test.yml`) runs three parallel jobs:
+The `Tests` workflow (`.github/workflows/test.yml`) runs these jobs in parallel:
 
 | Job | What it does |
 |-----|-------------|
 | **build** | Type check (`tsc`) + Vite build (skips live YouTube fetch via `build:ci`) |
 | **unit** | Jest unit tests and Node tests for `shared/` and the Worker (type checking is handled by the build job) |
-| **e2e** | Playwright browser tests on Chromium (uses checked-in fixture data via `build:e2e`), run in the official Playwright container image matching the locked Playwright version |
+| **e2e** | Playwright browser tests, one job per browser (Chromium, Firefox, WebKit), using checked-in fixture data via `build:e2e`. They run in the official Playwright container image matching the locked Playwright version, and a final `E2E Tests` job requires every browser to pass |
 
 CI uses Node.js 26 and installs the exact npm version declared in `package.json` (`npm@12.2.1`). Actions are pinned to reviewed commit SHAs and updated through Dependabot. Playwright rejects focused (`test.only`) tests in CI and uploads HTML reports for every completed, non-cancelled run, including successful retries.
 

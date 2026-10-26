@@ -12,6 +12,12 @@ test.describe('Visual and responsive', () => {
   });
 
   test('no broken images on the page', async ({ page }) => {
+    // The fixture's video IDs don't exist, so YouTube answers their thumbnails
+    // with a 404 placeholder, which Firefox treats as a broken image. Serve a
+    // thumbnail-sized image instead so the test checks the page, not YouTube.
+    await page.route('https://i.ytimg.com/**', (route) =>
+      route.fulfill({ path: 'tests/fixtures/thumbnail.png' }),
+    );
     await page.goto('/');
     await page.locator('a[aria-label^="Watch on YouTube:"]').first().waitFor({ timeout: 15_000 });
 
@@ -63,10 +69,10 @@ test.describe('Visual and responsive', () => {
 
   test('fonts are loaded', async ({ page }) => {
     await page.goto('/');
-    // Wait for fonts to be ready
-    await page.evaluate(() => document.fonts.ready);
-
-    const fontLoaded = await page.evaluate(() => document.fonts.check('16px Cinzel'));
-    expect(fontLoaded).toBe(true);
+    // `document.fonts.ready` can resolve before the page starts loading Cinzel
+    // (seen in WebKit under load), so poll until it has loaded.
+    await expect
+      .poll(() => page.evaluate(() => document.fonts.check('16px Cinzel')))
+      .toBe(true);
   });
 });

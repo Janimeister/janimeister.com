@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": ">=26"
   },
   "description": "Personal site for the Janimeister YouTube channel — FromSoftware boss kills.",
   "scripts": {
@@ -19,7 +19,7 @@
     "test": "jest",
     "test:node": "node --test \"shared/**/*.test.mjs\" \"worker/**/*.test.ts\"",
     "test:e2e": "playwright test",
-    "test:e2e:install": "playwright install --with-deps chromium",
+    "test:e2e:install": "playwright install --with-deps chromium firefox webkit",
     "worker:dev": "wrangler dev worker/src/index.ts",
     "worker:deploy": "wrangler deploy"
   },

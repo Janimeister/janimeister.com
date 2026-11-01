@@ -31,7 +31,7 @@ export default function VideoCard({ video, index }: Props): ReactElement {
       target="_blank"
       rel="noreferrer noopener"
       className="group frame-souls frame-souls-corners block overflow-hidden hover:shadow-ember transition-all duration-500 hover:-translate-y-1"
-      aria-label={`Watch on YouTube: ${video.title}`}
+      data-testid="video-card"
     >
       <div className="relative aspect-video overflow-hidden bg-ash-3">
         <img
@@ -88,7 +88,7 @@ export default function VideoCard({ video, index }: Props): ReactElement {
             <span>Date unknown</span>
           )}
           <span className="font-display tracking-[0.25em] uppercase text-gold/70">
-            Watch ▸
+            Watch<span className="sr-only"> on YouTube</span> <span aria-hidden>▸</span>
           </span>
         </p>
       </div>

@@ -38,7 +38,7 @@ test.describe('Resilience', () => {
     fail = false;
     await page.getByRole('button', { name: /try again/i }).click();
 
-    await expect(page.locator('a[aria-label^="Watch on YouTube:"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="video-card"]').first()).toBeVisible();
     await expect(page.getByRole('alert')).toBeHidden();
   });
 
